@@ -186,7 +186,9 @@ export async function getChartDetails(
         // Sort values by repo score (author weight + stars)
         const sortedValues = data.values
           .map(v => ({
-            ...v,
+            value: v.value,
+            repo: v.repo,
+            repoUrl: v.repoUrl,
             score: Math.round(calculateRepoScore(v.repo, v.stars, authorWeights) * 10) / 10,
           }))
           .sort((a, b) => b.score - a.score)
