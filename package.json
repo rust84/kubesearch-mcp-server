@@ -1,0 +1,32 @@
+{
+  "name": "kubesearch-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for querying k8s-at-home-search helm deployment examples",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "watch": "tsx watch src/index.ts",
+    "test": "echo \"No tests yet\""
+  },
+  "keywords": [
+    "mcp",
+    "kubernetes",
+    "helm",
+    "k8s-at-home"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
