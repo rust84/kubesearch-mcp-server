@@ -36,6 +36,11 @@ import {
   getChartIndexSchema,
   GetChartIndexInput,
 } from './tools/get-chart-index.js';
+import {
+  getChartStats,
+  getChartStatsSchema,
+  GetChartStatsInput,
+} from './tools/get-chart-stats.js';
 
 /**
  * Parse author weights from environment variable
@@ -99,6 +104,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       searchHelmChartsSchema,
       getChartDetailsSchema,
       getChartIndexSchema,
+      getChartStatsSchema,
       searchContainerImagesSchema,
     ],
   };
@@ -139,6 +145,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'get_chart_index': {
         const input = args as unknown as GetChartIndexInput;
         const results = await getChartIndex(dataCollector, input);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(results, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'get_chart_stats': {
+        const input = args as unknown as GetChartStatsInput;
+        const results = await getChartStats(dataCollector, input);
         return {
           content: [
             {

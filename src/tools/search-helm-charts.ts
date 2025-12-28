@@ -17,7 +17,10 @@ export async function searchHelmCharts(
   input: SearchHelmChartsInput,
   authorWeights: Record<string, number> = {}
 ): Promise<SearchChartResult[]> {
-  const { query, limit = 20 } = input;
+  const { query, limit: rawLimit = 10 } = input;
+
+  // Enforce upper bound
+  const limit = Math.min(rawLimit, 100);
 
   // Collect all releases from database
   const collectorData = await dataCollector.collectReleases();
@@ -49,7 +52,7 @@ export async function searchHelmCharts(
       deploymentUrl: deployment.deploymentUrl,
       icon: deployment.icon,
       key: deployment.key,
-      score,
+      score: Math.round(score * 10) / 10,
     }));
 
   return results;
@@ -67,8 +70,8 @@ export const searchHelmChartsSchema = {
       },
       limit: {
         type: 'number',
-        description: 'Maximum number of results to return (default: 10)',
-        default: 20,
+        description: 'Maximum number of results to return (default: 10, max: 100)',
+        default: 10,
       },
     },
     required: ['query'],

@@ -128,7 +128,6 @@ export async function getChartDetails(
 
   // Calculate statistics
   const totalRepos = repos.length;
-  const avgStars = Math.round(repos.reduce((sum, r) => sum + r.stars, 0) / totalRepos);
 
   // Find latest version (semantic versioning aware)
   const versions = repos
@@ -188,7 +187,7 @@ export async function getChartDetails(
         const sortedValues = data.values
           .map(v => ({
             ...v,
-            score: calculateRepoScore(v.repo, v.stars, authorWeights),
+            score: Math.round(calculateRepoScore(v.repo, v.stars, authorWeights) * 10) / 10,
           }))
           .sort((a, b) => b.score - a.score)
           .slice(0, valuesLimit); // Limit to top N values per path
@@ -213,7 +212,6 @@ export async function getChartDetails(
     popularValues,
     statistics: {
       totalRepos,
-      avgStars,
       latestVersion,
     },
   };
