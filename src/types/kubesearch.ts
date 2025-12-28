@@ -120,7 +120,6 @@ export interface ChartDetailsResult {
   }>;
   statistics: {
     totalRepos: number;
-    avgStars: number;
     latestVersion: string;
   };
 }
@@ -144,6 +143,30 @@ export interface ChartIndexResult {
   paths: Array<{
     path: string;
     usageCount: number;
+  }>;
+}
+
+export interface ChartStatsResult {
+  name: string;
+  chartName: string;
+  helmRepoURL: string;
+  helmRepoName: string;
+  icon?: string;
+  statistics: {
+    totalDeployments: number;
+    minStars: number;
+    maxStars: number;
+    latestVersion: string;
+  };
+  topRepositories: Array<{
+    repo: string;
+    repoUrl: string;
+    stars: number;
+    version: string;
+  }>;
+  versionDistribution: Array<{
+    version: string;
+    count: number;
   }>;
 }
 

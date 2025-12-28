@@ -7,6 +7,7 @@ An MCP (Model Context Protocol) server that provides tools to query [k8s-at-home
 - **Search Helm Charts** - Find charts by name and see individual deployment examples from community members
 - **Chart Details** - Get detailed information about specific charts including popular configuration values with all variations sorted by repository quality
 - **Chart Index** - Explore available configuration paths in a chart to discover what can be configured
+- **Chart Statistics** - Get metrics about chart adoption, version distribution, and top repositories using the chart
 - **Image Search** - Find deployments using specific container images
 
 ## Data Source
@@ -153,7 +154,7 @@ Search for Helm charts by name and get **individual deployment examples** from c
 
 **Parameters:**
 - `query` (string, required) - Chart or release name (e.g., "plex", "traefik")
-- `limit` (number, optional) - Max results to return (default: 10)
+- `limit` (number, optional) - Max results to return (default: 10, max: 100)
 
 **Example:**
 ```typescript
@@ -294,7 +295,78 @@ Explore what configuration paths are available in a chart by listing all paths f
 - "How is ingress typically configured?" - Filter with `searchPath: "ingress"`
 - Token-efficient exploration before requesting full values with `get_chart_details`
 
-### 4. `search_container_images`
+### 4. `get_chart_stats`
+
+Get statistics and metrics about a Helm chart including deployment count, version distribution, and top repositories using it. Supports fuzzy matching - no need to search for the exact chart key first.
+
+**Parameters:**
+- `query` (string, required) - Chart or release name (e.g., "plex", "prowlarr")
+
+**Examples:**
+```typescript
+// Simple chart name lookup
+{
+  "query": "plex"
+}
+
+// Also works with partial matches
+{
+  "query": "prowlarr"
+}
+```
+
+**Returns:**
+```json
+{
+  "name": "plex",
+  "chartName": "app-template",
+  "helmRepoURL": "oci://ghcr.io/bjw-s-labs/helm/app-template",
+  "helmRepoName": "app-template",
+  "icon": "plex.png",
+  "statistics": {
+    "totalDeployments": 67,
+    "minStars": 0,
+    "maxStars": 2670,
+    "latestVersion": "4.5.0"
+  },
+  "topRepositories": [
+    {
+      "repo": "onedr0p/home-ops",
+      "repoUrl": "https://github.com/onedr0p/home-ops",
+      "stars": 2670,
+      "version": "4.5.0"
+    },
+    {
+      "repo": "billimek/k8s-gitops",
+      "repoUrl": "https://github.com/billimek/k8s-gitops",
+      "stars": 748,
+      "version": "4.5.0"
+    }
+  ],
+  "versionDistribution": [
+    {
+      "version": "4.5.0",
+      "count": 45
+    },
+    {
+      "version": "3.2.0",
+      "count": 12
+    },
+    {
+      "version": "3.1.0",
+      "count": 10
+    }
+  ]
+}
+```
+
+**Use cases:**
+- "How many people are using this chart?" - Check totalDeployments
+- "What's the most popular version?" - See versionDistribution
+- "Which high-quality repos use this?" - View topRepositories sorted by stars
+- Quick overview before diving into detailed values
+
+### 5. `search_container_images`
 
 Find deployments using specific container images.
 
