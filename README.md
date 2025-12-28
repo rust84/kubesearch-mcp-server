@@ -441,12 +441,7 @@ Check file permissions - the server needs read access to both database files.
 
 The databases may be empty or out of date. Rebuild the k8s-at-home-search databases following their documentation.
 
-## License
-
-MIT
-
 ## Credits
 
-- Built on the [Model Context Protocol](https://modelcontextprotocol.io/)
-- Data from [k8s-at-home-search](https://kubesearch.dev) by [@onedr0p](https://github.com/onedr0p)
+- Data from [k8s-at-home-search](https://kubesearch.dev) by [@whazor](https://github.com/whazor)
 - Indexes real-world Kubernetes configurations from the k8s-at-home community
