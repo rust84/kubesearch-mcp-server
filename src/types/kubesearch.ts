@@ -114,7 +114,6 @@ export interface ChartDetailsResult {
       value: any;
       repo: string;
       repoUrl: string;
-      stars: number;
       score: number;
     }>;
   }>;
