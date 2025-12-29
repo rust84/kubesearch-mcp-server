@@ -65,8 +65,8 @@ function parseAuthorWeights(): Record<string, number> {
 
 // Load configuration from environment variables
 const config: Config = {
-  DB_PATH: process.env.KUBESEARCH_DB_PATH || '',
-  DB_EXTENDED_PATH: process.env.KUBESEARCH_DB_EXTENDED_PATH || '',
+  DB_PATH: process.env.KUBESEARCH_DB_PATH || './repos.db',
+  DB_EXTENDED_PATH: process.env.KUBESEARCH_DB_EXTENDED_PATH || './repos-extended.db',
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
   AUTHOR_WEIGHTS: parseAuthorWeights(),
 };
