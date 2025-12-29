@@ -17,10 +17,10 @@ import { DataCollector } from './services/data-collector.js';
 import { Config, DEFAULT_AUTHOR_WEIGHTS } from './types/kubesearch.js';
 
 import {
-  searchHelmCharts,
-  searchHelmChartsSchema,
-  SearchHelmChartsInput,
-} from './tools/search-helm-charts.js';
+  searchDeployments,
+  searchDeploymentsSchema,
+  SearchDeploymentsInput,
+} from './tools/search-deployments.js';
 import {
   getChartDetails,
   getChartDetailsSchema,
@@ -41,6 +41,11 @@ import {
   getChartStatsSchema,
   GetChartStatsInput,
 } from './tools/get-chart-stats.js';
+import {
+  listChartSources,
+  listChartSourcesSchema,
+  ListChartSourcesInput,
+} from './tools/list-chart-sources.js';
 
 /**
  * Parse author weights from environment variable
@@ -101,7 +106,8 @@ const server = new Server(
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
-      searchHelmChartsSchema,
+      searchDeploymentsSchema,
+      listChartSourcesSchema,
       getChartDetailsSchema,
       getChartIndexSchema,
       getChartStatsSchema,
@@ -116,9 +122,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
-      case 'search_helm_charts': {
-        const input = args as unknown as SearchHelmChartsInput;
-        const results = await searchHelmCharts(dataCollector, input, config.AUTHOR_WEIGHTS);
+      case 'search_deployments': {
+        const input = args as unknown as SearchDeploymentsInput;
+        const results = await searchDeployments(dataCollector, input, config.AUTHOR_WEIGHTS);
         return {
           content: [
             {
@@ -158,6 +164,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'get_chart_stats': {
         const input = args as unknown as GetChartStatsInput;
         const results = await getChartStats(dataCollector, input);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(results, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'list_chart_sources': {
+        const input = args as unknown as ListChartSourcesInput;
+        const results = await listChartSources(dataCollector, input);
         return {
           content: [
             {

@@ -1,20 +1,21 @@
 /**
- * search_helm_charts tool
- * Search for helm charts by name and return deployment examples
+ * search_deployments tool
+ * Search for deployment examples from community repositories
+ * Returns individual deployments showing how real users configure and deploy charts
  */
 
 import { DataCollector } from '../services/data-collector.js';
 import { SearchChartResult } from '../types/kubesearch.js';
 import { calculateScore, matchesQuery } from '../utils/scoring.js';
 
-export interface SearchHelmChartsInput {
+export interface SearchDeploymentsInput {
   query: string;
   limit?: number;
 }
 
-export async function searchHelmCharts(
+export async function searchDeployments(
   dataCollector: DataCollector,
-  input: SearchHelmChartsInput,
+  input: SearchDeploymentsInput,
   authorWeights: Record<string, number> = {}
 ): Promise<SearchChartResult[]> {
   const { query, limit: rawLimit = 10 } = input;
@@ -58,9 +59,9 @@ export async function searchHelmCharts(
   return results;
 }
 
-export const searchHelmChartsSchema = {
-  name: 'search_helm_charts',
-  description: 'Search for Helm charts by name and get individual deployment examples from community members, scored by repository quality (stars) and author reputation',
+export const searchDeploymentsSchema = {
+  name: 'search_deployments',
+  description: 'Search for real-world deployment examples from community repositories. Returns individual deployments showing how users configure and deploy Helm charts, scored by repository quality (stars) and author reputation. Each result includes a "key" field that can be used with get_chart_details, get_chart_index, or get_chart_stats.',
   inputSchema: {
     type: 'object',
     properties: {

@@ -4,7 +4,8 @@ An MCP (Model Context Protocol) server that provides tools to query [k8s-at-home
 
 ## Features
 
-- **Search Helm Charts** - Find charts by name and see individual deployment examples from community members
+- **Search Deployments** - Find real-world deployment examples from community repositories to learn how others configure charts
+- **List Chart Sources** - Compare all available chart sources (official repos, mirrors, community forks) with deployment counts
 - **Chart Details** - Get detailed information about specific charts including popular configuration values with all variations sorted by repository quality
 - **Chart Index** - Explore available configuration paths in a chart to discover what can be configured
 - **Chart Statistics** - Get metrics about chart adoption, version distribution, and top repositories using the chart
@@ -148,9 +149,9 @@ node /path/to/kubesearch-mcp-server/dist/index.js
 
 ## Available Tools
 
-### 1. `search_helm_charts`
+### 1. `search_deployments`
 
-Search for Helm charts by name and get **individual deployment examples** from community members, ranked by repository quality (stars) and author reputation.
+Search for real-world **deployment examples** from community repositories. Returns individual deployments showing how users configure and deploy Helm charts, ranked by repository quality (stars) and author reputation. Use this to find example configurations to learn from.
 
 **Parameters:**
 - `query` (string, required) - Chart or release name (e.g., "plex", "traefik")
@@ -182,7 +183,58 @@ Search for Helm charts by name and get **individual deployment examples** from c
 ]
 ```
 
-### 2. `get_chart_details`
+### 2. `list_chart_sources`
+
+List all available chart sources (helm repositories) for a given chart name with deployment counts. Compare official repos vs mirrors vs community forks to choose the most popular/reliable source.
+
+**Parameters:**
+- `query` (string, required) - Chart or release name to search for (e.g., "openebs", "plex")
+- `minCount` (number, optional) - Minimum number of repositories required to include a chart (default: 3)
+
+**Examples:**
+```typescript
+// Find all chart paths for "openebs"
+{
+  "query": "openebs",
+  "minCount": 3
+}
+
+// Include even rarely-used charts
+{
+  "query": "plex",
+  "minCount": 1
+}
+```
+
+**Returns:**
+```json
+[
+  {
+    "name": "openebs",
+    "chart": "openebs",
+    "helmRepoURL": "oci://ghcr.io/home-operations/charts-mirror/openebs",
+    "key": "ghcr.io-home-operations-charts-mirror-openebs-openebs",
+    "count": 74,
+    "icon": null
+  },
+  {
+    "name": "openebs",
+    "chart": "openebs",
+    "helmRepoURL": "https://openebs.github.io/openebs",
+    "key": "openebs.github.io-openebs-openebs-openebs",
+    "count": 47,
+    "icon": null
+  }
+]
+```
+
+**Use cases:**
+- "Show me all the different sources for this chart" - Compare official vs mirror vs community repos
+- "Which chart path is most popular?" - See deployment counts to choose the most reliable source
+- "Are there multiple versions of this chart?" - Discover different helm repo sources
+- Token-efficient overview before diving into specific chart details
+
+### 3. `get_chart_details`
 
 Get detailed information about a specific Helm chart including repositories using it and popular configuration values.
 
@@ -295,23 +347,25 @@ Explore what configuration paths are available in a chart by listing all paths f
 - "How is ingress typically configured?" - Filter with `searchPath: "ingress"`
 - Token-efficient exploration before requesting full values with `get_chart_details`
 
-### 4. `get_chart_stats`
+### 5. `get_chart_stats`
 
-Get statistics and metrics about a Helm chart including deployment count, version distribution, and top repositories using it. Supports fuzzy matching - no need to search for the exact chart key first.
+Get statistics and metrics about a specific Helm chart source including deployment count, repository quality metrics (stars), version distribution, and top repositories. Requires a chart key from `list_chart_sources` or `search_deployments`.
 
 **Parameters:**
-- `query` (string, required) - Chart or release name (e.g., "plex", "prowlarr")
+- `key` (string, required) - Chart key (e.g., "ghcr.io-home-operations-charts-mirror-openebs-openebs")
 
 **Examples:**
 ```typescript
-// Simple chart name lookup
+// Get stats for a specific chart source
 {
-  "query": "plex"
+  "key": "ghcr.io-bjw-s-helm-plex"
 }
 
-// Also works with partial matches
+// Typical workflow: first list sources, then get stats
+// 1. Use list_chart_sources to find: key = "ghcr.io-home-operations-charts-mirror-openebs-openebs"
+// 2. Then get stats for that specific source:
 {
-  "query": "prowlarr"
+  "key": "ghcr.io-home-operations-charts-mirror-openebs-openebs"
 }
 ```
 
@@ -366,7 +420,7 @@ Get statistics and metrics about a Helm chart including deployment count, versio
 - "Which high-quality repos use this?" - View topRepositories sorted by stars
 - Quick overview before diving into detailed values
 
-### 5. `search_container_images`
+### 6. `search_container_images`
 
 Find deployments using specific container images.
 
