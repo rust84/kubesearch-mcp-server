@@ -5,46 +5,36 @@
 
 import { DataCollector } from '../services/data-collector.js';
 import { ChartStatsResult } from '../types/kubesearch.js';
-import { calculateScore, matchesQuery } from '../utils/scoring.js';
 
 export interface GetChartStatsInput {
-  query: string;
+  key: string;
 }
 
 export async function getChartStats(
   dataCollector: DataCollector,
   input: GetChartStatsInput
 ): Promise<ChartStatsResult> {
-  const { query } = input;
+  const { key } = input;
 
   // Collect all releases
   const collectorData = await dataCollector.collectReleases();
 
-  // Find matching releases using fuzzy matching
-  const matchingReleases = collectorData.releases.filter(release =>
-    matchesQuery(release, query)
-  );
-
-  if (matchingReleases.length === 0) {
-    throw new Error(`No charts found matching query: '${query}'`);
-  }
-
-  // Score and find the best match (highest score)
-  const scoredMatches = matchingReleases
-    .map(release => ({
-      release,
-      score: calculateScore(release, query, {}),
-    }))
-    .sort((a, b) => b.score - a.score);
-
-  const matchingRelease = scoredMatches[0].release;
-  const key = matchingRelease.key;
-
   const repos = collectorData.repos[key] || [];
 
   if (repos.length === 0) {
-    throw new Error(`No repositories found for chart '${key}'`);
+    throw new Error(`No repositories found for chart key: '${key}'`);
   }
+
+  // Get metadata from first repo
+  const firstRepo = repos[0];
+  const name = firstRepo.name;
+  const helmRepoName = firstRepo.helm_repo_name || 'helm-repo';
+  const helmRepoURL = firstRepo.helm_repo_url;
+  const icon = firstRepo.icon || undefined;
+
+  // Find a release with this key to get the chart name
+  const matchingRelease = collectorData.releases.find(r => r.key === key);
+  const chartName = matchingRelease?.chart || name;
 
   // Calculate statistics
   const totalDeployments = repos.length;
@@ -77,17 +67,12 @@ export async function getChartStats(
       version: r.chart_version || 'unknown',
     }));
 
-  // Get metadata from first repo
-  const firstRepo = repos[0];
-  const helmRepoName = firstRepo.helm_repo_name || 'helm-repo';
-  const helmRepoURL = firstRepo.helm_repo_url;
-
   return {
-    name: matchingRelease.name,
-    chartName: matchingRelease.chart,
+    name,
+    chartName,
     helmRepoURL,
     helmRepoName,
-    icon: matchingRelease.icon,
+    icon,
     statistics: {
       totalDeployments,
       minStars,
@@ -101,15 +86,15 @@ export async function getChartStats(
 
 export const getChartStatsSchema = {
   name: 'get_chart_stats',
-  description: 'Get statistics and metrics about a Helm chart including deployment count, repository quality metrics (stars), version distribution, and top repositories using the chart. Supports fuzzy matching - you can search by chart name (e.g., "plex", "prowlarr") without needing the exact chart key first.',
+  description: 'Get statistics and metrics about a specific Helm chart source including deployment count, repository quality metrics (stars), version distribution, and top repositories. Requires a chart key - use list_chart_sources first to find available chart keys.',
   inputSchema: {
     type: 'object',
     properties: {
-      query: {
+      key: {
         type: 'string',
-        description: 'Chart or release name to get statistics for (e.g., "plex", "prowlarr", "traefik"). Uses fuzzy matching to find the best match.',
+        description: 'Chart key from list_chart_sources or search_deployments results (e.g., "ghcr.io-home-operations-charts-mirror-openebs-openebs")',
       },
     },
-    required: ['query'],
+    required: ['key'],
   },
 };

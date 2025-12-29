@@ -107,13 +107,13 @@ export async function getChartIndex(
 
 export const getChartIndexSchema = {
   name: 'get_chart_index',
-  description: 'List all configuration paths available in a chart to help explore what settings can be configured. Returns a flat list of all value paths found across real-world deployments. Use searchPath to filter to a specific section (e.g., "persistence" shows only persistence.config, persistence.cache, etc.).',
+  description: 'List all configuration paths available in a chart to help explore what settings can be configured. Returns a flat list of all value paths found across real-world deployments. Use searchPath to filter to a specific section (e.g., "persistence" shows only persistence.config, persistence.cache, etc.). Requires a chart key - use list_chart_sources or search_deployments first to find the key.',
   inputSchema: {
     type: 'object',
     properties: {
       key: {
         type: 'string',
-        description: 'Chart key from search results (e.g., "ghcr.io-bjw-s-helm-plex")',
+        description: 'Chart key from list_chart_sources or search_deployments (e.g., "ghcr.io-bjw-s-helm-plex")',
       },
       searchPath: {
         type: 'string',

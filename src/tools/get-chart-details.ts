@@ -221,13 +221,13 @@ export async function getChartDetails(
 
 export const getChartDetailsSchema = {
   name: 'get_chart_details',
-  description: 'Get detailed information about a specific Helm chart including popular configuration values with all variations sorted by repository quality (stars + author reputation). Optionally filter to specific configuration paths (e.g., "persistence" to see only persistence-related settings).',
+  description: 'Get detailed information about a specific Helm chart including popular configuration values with all variations sorted by repository quality (stars + author reputation). Optionally filter to specific configuration paths (e.g., "persistence" to see only persistence-related settings). TIP: Use get_chart_index first to explore available configuration paths, then use valuePath to narrow down to specific sections. Requires a chart key - use list_chart_sources or search_deployments first to find the key.',
   inputSchema: {
     type: 'object',
     properties: {
       key: {
         type: 'string',
-        description: 'Chart key from search results (e.g., "ghcr.io-bjw-s-helm-plex")',
+        description: 'Chart key from list_chart_sources or search_deployments (e.g., "ghcr.io-bjw-s-helm-plex")',
       },
       includeValues: {
         type: 'boolean',
@@ -246,7 +246,7 @@ export const getChartDetailsSchema = {
       },
       valuePath: {
         type: 'string',
-        description: 'Optional path prefix to filter results (e.g., "persistence" returns only persistence.config, persistence.cache, persistence.tmp, etc.). Case-insensitive prefix matching.',
+        description: 'Optional path prefix to filter results (e.g., "persistence" returns only persistence.config, persistence.cache, persistence.tmp, etc.). Case-insensitive prefix matching. Use get_chart_index first to discover available paths.',
       },
     },
     required: ['key'],
