@@ -19,6 +19,147 @@ This MCP server queries a local k8s-at-home-search SQLite database containing:
 - 147+ Argo CD Applications
 - Real-world configuration values from the k8s-at-home community
 
+## Docker Usage
+
+### Quick Start
+
+Pull and run the pre-built image from GitHub Container Registry:
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/your-org/kubesearch-mcp-server:latest
+
+# Run with database volumes (REQUIRED)
+docker run --init -i \
+  -v $(pwd)/repos.db:/data/repos.db:ro \
+  -v $(pwd)/repos-extended.db:/data/repos-extended.db:ro \
+  ghcr.io/your-org/kubesearch-mcp-server:latest
+```
+
+**Important:** The Docker image does NOT include databases. You must mount your database files at `/data/repos.db` and `/data/repos-extended.db`.
+
+### Using with Claude Desktop
+
+Add to your Claude Desktop configuration (`~/.config/Claude/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "kubesearch": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--init",
+        "-i",
+        "--rm",
+        "-v", "/absolute/path/to/repos.db:/data/repos.db:ro",
+        "-v", "/absolute/path/to/repos-extended.db:/data/repos-extended.db:ro",
+        "ghcr.io/your-org/kubesearch-mcp-server:latest"
+      ]
+    }
+  }
+}
+```
+
+**Note:** Replace `/absolute/path/to/` with the actual absolute path to your database files.
+
+### Docker Compose
+
+Create a `docker-compose.yml` (or use the included one):
+
+```yaml
+version: '3.8'
+services:
+  kubesearch-mcp:
+    image: ghcr.io/your-org/kubesearch-mcp-server:latest
+    container_name: kubesearch-mcp
+    init: true
+    stdin_open: true
+    tty: true
+    environment:
+      - LOG_LEVEL=info
+    volumes:
+      - ./repos.db:/data/repos.db:ro
+      - ./repos-extended.db:/data/repos-extended.db:ro
+```
+
+Run with:
+
+```bash
+# Start the service
+docker-compose up
+
+# Run in detached mode
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop the service
+docker-compose down
+```
+
+### Building Locally
+
+```bash
+# Build the image
+docker build -t kubesearch-mcp-server .
+
+# Run your local build
+docker run --init -i \
+  -v $(pwd)/repos.db:/data/repos.db:ro \
+  -v $(pwd)/repos-extended.db:/data/repos-extended.db:ro \
+  kubesearch-mcp-server
+```
+
+### Database Requirements
+
+The container requires two SQLite database files to be mounted:
+
+- **repos.db** (~5.5 MB) - Main database
+- **repos-extended.db** (~29 MB) - Extended data
+
+**Mount location:** `/data/`
+
+These files are NOT included in the Docker image. You must:
+1. Download the databases (see Prerequisites section below)
+2. Mount them as read-only volumes when running the container
+
+### Environment Variables
+
+Configure the server using environment variables:
+
+- `KUBESEARCH_DB_PATH` - Path to main database (default: `/data/repos.db`)
+- `KUBESEARCH_DB_EXTENDED_PATH` - Path to extended database (default: `/data/repos-extended.db`)
+- `LOG_LEVEL` - Logging level: `debug`, `info`, `warn`, `error` (default: `info`)
+- `AUTHOR_WEIGHTS` - JSON object for author scoring (default: `{"bjw-s": 1.5}`)
+
+Example with custom environment:
+
+```bash
+docker run --init -i \
+  -e LOG_LEVEL=debug \
+  -e 'AUTHOR_WEIGHTS={"bjw-s": 1.5, "onedr0p": 1.2}' \
+  -v $(pwd)/repos.db:/data/repos.db:ro \
+  -v $(pwd)/repos-extended.db:/data/repos-extended.db:ro \
+  kubesearch-mcp-server
+```
+
+### Multi-Platform Support
+
+The image supports both AMD64 and ARM64 architectures:
+
+```bash
+# Pull specific platform
+docker pull --platform linux/amd64 ghcr.io/your-org/kubesearch-mcp-server:latest
+docker pull --platform linux/arm64 ghcr.io/your-org/kubesearch-mcp-server:latest
+```
+
+Works on:
+- x86_64 Linux/Windows/macOS
+- Apple Silicon (M1/M2/M3)
+- ARM64 servers (AWS Graviton, etc.)
+
 ## Prerequisites
 
 1. **Node.js 18+** installed on your system
