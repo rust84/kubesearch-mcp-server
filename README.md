@@ -19,7 +19,7 @@ This MCP server queries a local k8s-at-home-search SQLite database containing:
 - 147+ Argo CD Applications
 - Real-world configuration values from the k8s-at-home community
 
-## Docker Usage
+## Docker Usage (**Recommended**)
 
 ### Quick Start
 
@@ -62,42 +62,6 @@ Add to your Claude Desktop configuration (`~/.config/Claude/claude_desktop_confi
 ```
 
 **Note:** Replace `/absolute/path/to/` with the actual absolute path to your database files.
-
-### Docker Compose
-
-Create a `docker-compose.yml` (or use the included one):
-
-```yaml
-version: '3.8'
-services:
-  kubesearch-mcp:
-    image: ghcr.io/rust84/kubesearch-mcp-server:latest
-    container_name: kubesearch-mcp
-    init: true
-    stdin_open: true
-    tty: true
-    environment:
-      - LOG_LEVEL=info
-    volumes:
-      - ./repos.db:/data/repos.db:ro
-      - ./repos-extended.db:/data/repos-extended.db:ro
-```
-
-Run with:
-
-```bash
-# Start the service
-docker-compose up
-
-# Run in detached mode
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop the service
-docker-compose down
-```
 
 ### Building Locally
 
