@@ -1,6 +1,6 @@
 {
   "name": "kubesearch-mcp-server",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "MCP server for querying k8s-at-home-search helm deployment examples",
   "type": "module",
   "main": "dist/index.js",
