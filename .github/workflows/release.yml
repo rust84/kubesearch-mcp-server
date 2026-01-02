@@ -1,0 +1,228 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g., v1.2.3)'
+        required: true
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # First, run all CI checks
+  validate:
+    name: Run CI Validation
+    uses: ./.github/workflows/ci.yml
+
+  # Extract and validate version information
+  prepare:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    needs: validate
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag_version: ${{ steps.version.outputs.tag_version }}
+      version_match: ${{ steps.version.outputs.match }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version information
+        id: version
+        run: |
+          # Get version from package.json
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          echo "version=${PKG_VERSION}" >> $GITHUB_OUTPUT
+
+          # Get version from git tag
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG_VERSION="${{ inputs.tag }}"
+          else
+            TAG_VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+
+          # Remove 'v' prefix for comparison
+          TAG_VERSION_CLEAN="${TAG_VERSION#v}"
+          echo "tag_version=${TAG_VERSION}" >> $GITHUB_OUTPUT
+
+          # Check if versions match
+          if [ "${PKG_VERSION}" = "${TAG_VERSION_CLEAN}" ]; then
+            echo "match=true" >> $GITHUB_OUTPUT
+            echo "✅ Version match: package.json (${PKG_VERSION}) = tag (${TAG_VERSION_CLEAN})"
+          else
+            echo "match=false" >> $GITHUB_OUTPUT
+            echo "⚠️  Version mismatch: package.json (${PKG_VERSION}) ≠ tag (${TAG_VERSION_CLEAN})"
+            echo "::warning::Version mismatch detected. Consider updating package.json before tagging."
+          fi
+
+      - name: Validate tag format
+        run: |
+          TAG_VERSION="${{ steps.version.outputs.tag_version }}"
+          if ! [[ "${TAG_VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+            echo "::error::Invalid tag format: ${TAG_VERSION}"
+            echo "Expected format: v1.2.3 or v1.2.3-beta.1"
+            exit 1
+          fi
+          echo "✅ Tag format is valid"
+
+  # Build and push multi-platform Docker images
+  docker:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    needs: [validate, prepare]
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+      tags: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=KubeSearch MCP Server
+            org.opencontainers.image.description=MCP server for k8s-at-home-search
+            org.opencontainers.image.vendor=rust84
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+      - name: Generate Docker attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      - name: Docker build summary
+        run: |
+          echo "### Docker Image Published ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry:** \`${{ env.REGISTRY }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Repository:** \`${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ needs.prepare.outputs.tag_version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Digest:** \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Platforms:** linux/amd64, linux/arm64" >> $GITHUB_STEP_SUMMARY
+
+  # Create GitHub Release with changelog
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [prepare, docker]
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v5
+        with:
+          configuration: .github/release-changelog-config.json
+          outputFile: CHANGELOG.md
+          toTag: ${{ needs.prepare.outputs.tag_version }}
+          commitMode: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.prepare.outputs.tag_version }}
+          name: Release ${{ needs.prepare.outputs.tag_version }}
+          body: |
+            ## What's Changed
+
+            ${{ steps.changelog.outputs.changelog }}
+
+            ## Docker Images
+
+            Multi-platform images (linux/amd64, linux/arm64) are available:
+
+            ```bash
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.prepare.outputs.version }}
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ```
+
+            **Digest:** `${{ needs.docker.outputs.digest }}`
+
+            ## Installation
+
+            See the [README](https://github.com/${{ github.repository }}#installation) for installation instructions.
+
+            ---
+
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/v${{ steps.changelog.outputs.fromTag }}...${{ needs.prepare.outputs.tag_version }}
+          draft: false
+          prerelease: ${{ contains(needs.prepare.outputs.tag_version, '-') }}
+          generateReleaseNotes: false
+          makeLatest: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release summary
+        run: |
+          echo "### GitHub Release Created ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.prepare.outputs.tag_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Release URL:** https://github.com/${{ github.repository }}/releases/tag/${{ needs.prepare.outputs.tag_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.prepare.outputs.version_match }}" = "false" ]; then
+            echo "⚠️  **Warning:** package.json version (${{ needs.prepare.outputs.version }}) does not match tag version (${{ needs.prepare.outputs.tag_version }})" >> $GITHUB_STEP_SUMMARY
+          fi

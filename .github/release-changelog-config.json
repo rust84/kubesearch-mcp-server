@@ -1,0 +1,66 @@
+{
+  "categories": [
+    {
+      "title": "## 🚀 Features",
+      "labels": ["feature", "enhancement", "feat"]
+    },
+    {
+      "title": "## 🐛 Bug Fixes",
+      "labels": ["bug", "fix"]
+    },
+    {
+      "title": "## 📚 Documentation",
+      "labels": ["documentation", "docs"]
+    },
+    {
+      "title": "## 🧰 Maintenance",
+      "labels": ["chore", "dependencies", "deps"]
+    },
+    {
+      "title": "## 🔒 Security",
+      "labels": ["security"]
+    }
+  ],
+  "ignore_labels": [
+    "ignore",
+    "skip-changelog"
+  ],
+  "sort": "ASC",
+  "template": "#{{CHANGELOG}}",
+  "pr_template": "- #{{TITLE}} (#{{NUMBER}})",
+  "empty_template": "- No changes",
+  "label_extractor": [
+    {
+      "pattern": "^feat(\\(.+\\))?:",
+      "target": "feature"
+    },
+    {
+      "pattern": "^fix(\\(.+\\))?:",
+      "target": "bug"
+    },
+    {
+      "pattern": "^docs(\\(.+\\))?:",
+      "target": "documentation"
+    },
+    {
+      "pattern": "^chore(\\(.+\\))?:",
+      "target": "chore"
+    }
+  ],
+  "duplicate_filter": {
+    "pattern": "\\[no\\s?changelog\\]",
+    "on_property": "body"
+  },
+  "transformers": [
+    {
+      "pattern": "[\\-\\*] (\\[(...|NFC|\\w+)\\].*?)\\n(.+)",
+      "target": "- $1\n  $3"
+    }
+  ],
+  "max_tags_to_fetch": 200,
+  "max_pull_requests": 200,
+  "max_back_track_time_days": 365,
+  "base_branches": [
+    "main"
+  ]
+}
