@@ -20,6 +20,9 @@ jobs:
   validate:
     name: Run CI Validation
     uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+      security-events: write
 
   # Extract and validate version information
   prepare:
