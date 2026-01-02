@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  kubesearch-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/your-org/kubesearch-mcp-server:latest
+    container_name: kubesearch-mcp
+
+    # Process management - init handles signals properly
+    init: true
+
+    # MCP communication via stdin/stdout
+    stdin_open: true
+    tty: true
+
+    # Environment configuration
+    environment:
+      - KUBESEARCH_DB_PATH=/data/repos.db
+      - KUBESEARCH_DB_EXTENDED_PATH=/data/repos-extended.db
+      - LOG_LEVEL=info
+      # Optional: Custom author weights
+      # - AUTHOR_WEIGHTS={"bjw-s": 1.5, "onedr0p": 1.2}
+
+    # REQUIRED: Database volume mounts
+    # The image does NOT include databases - you must mount them
+    volumes:
+      - ./repos.db:/data/repos.db:ro
+      - ./repos-extended.db:/data/repos-extended.db:ro
+
+    # Security hardening (optional, recommended for production)
+    # Uncomment for standalone deployment
+    # read_only: true
+    # security_opt:
+    #   - no-new-privileges:true
+    # cap_drop:
+    #   - ALL
+
+    # Resource limits (optional, recommended for production)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 256M
+    #       cpus: '0.5'
+    #     reservations:
+    #       memory: 128M
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Logging
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
