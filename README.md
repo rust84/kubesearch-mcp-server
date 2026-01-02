@@ -27,13 +27,13 @@ Pull and run the pre-built image from GitHub Container Registry:
 
 ```bash
 # Pull the latest image
-docker pull ghcr.io/your-org/kubesearch-mcp-server:latest
+docker pull ghcr.io/rust84/kubesearch-mcp-server:latest
 
 # Run with database volumes (REQUIRED)
 docker run --init -i \
   -v $(pwd)/repos.db:/data/repos.db:ro \
   -v $(pwd)/repos-extended.db:/data/repos-extended.db:ro \
-  ghcr.io/your-org/kubesearch-mcp-server:latest
+  ghcr.io/rust84/kubesearch-mcp-server:latest
 ```
 
 **Important:** The Docker image does NOT include databases. You must mount your database files at `/data/repos.db` and `/data/repos-extended.db`.
@@ -54,7 +54,7 @@ Add to your Claude Desktop configuration (`~/.config/Claude/claude_desktop_confi
         "--rm",
         "-v", "/absolute/path/to/repos.db:/data/repos.db:ro",
         "-v", "/absolute/path/to/repos-extended.db:/data/repos-extended.db:ro",
-        "ghcr.io/your-org/kubesearch-mcp-server:latest"
+        "ghcr.io/rust84/kubesearch-mcp-server:latest"
       ]
     }
   }
@@ -71,7 +71,7 @@ Create a `docker-compose.yml` (or use the included one):
 version: '3.8'
 services:
   kubesearch-mcp:
-    image: ghcr.io/your-org/kubesearch-mcp-server:latest
+    image: ghcr.io/rust84/kubesearch-mcp-server:latest
     container_name: kubesearch-mcp
     init: true
     stdin_open: true
@@ -151,8 +151,8 @@ The image supports both AMD64 and ARM64 architectures:
 
 ```bash
 # Pull specific platform
-docker pull --platform linux/amd64 ghcr.io/your-org/kubesearch-mcp-server:latest
-docker pull --platform linux/arm64 ghcr.io/your-org/kubesearch-mcp-server:latest
+docker pull --platform linux/amd64 ghcr.io/rust84/kubesearch-mcp-server:latest
+docker pull --platform linux/arm64 ghcr.io/rust84/kubesearch-mcp-server:latest
 ```
 
 Works on:
@@ -732,6 +732,82 @@ Check file permissions - the server needs read access to both database files.
 ### No results returned
 
 The databases may be empty or out of date. Rebuild the k8s-at-home-search databases following their documentation.
+
+## Releases
+
+This project uses semantic versioning and automated releases via GitHub Actions.
+
+### Using Released Versions
+
+Every release produces multi-platform Docker images published to GitHub Container Registry:
+
+```bash
+# Pull specific version
+docker pull ghcr.io/rust84/kubesearch-mcp-server:1.0.1
+
+# Pull latest stable
+docker pull ghcr.io/rust84/kubesearch-mcp-server:latest
+
+# Pull by major version (gets latest 1.x.x)
+docker pull ghcr.io/rust84/kubesearch-mcp-server:1
+
+# Pull by major.minor version (gets latest 1.0.x)
+docker pull ghcr.io/rust84/kubesearch-mcp-server:1.0
+```
+
+**Available tags:**
+- `latest` - Latest stable release from main branch
+- `1.2.3` - Specific version (semantic versioning)
+- `1.2` - Latest patch version for minor release
+- `1` - Latest minor/patch version for major release
+
+**View all releases:** [GitHub Releases](https://github.com/rust84/kubesearch-mcp-server/releases)
+
+### Creating a Release
+
+Releases are automated when you create and push a version tag:
+
+1. **Update version and create tag**:
+   ```bash
+   npm version patch  # or minor, or major
+   ```
+
+   This automatically:
+   - Updates `package.json` and `package-lock.json`
+   - Creates a git commit
+   - Creates a git tag (e.g., `v0.0.2`)
+
+2. **Push commit and tag**:
+   ```bash
+   git push --follow-tags
+   ```
+
+3. **GitHub Actions automatically**:
+   - ✅ Validates tag format (must be `v*.*.*`)
+   - ✅ Runs CI quality checks (type check, build, security scan)
+   - ✅ Builds multi-platform Docker images (amd64, arm64)
+   - ✅ Generates changelog from commits and PRs
+   - ✅ Creates GitHub Release with changelog and Docker info
+   - ✅ Publishes images to ghcr.io with appropriate tags
+
+4. **Review and verify** (typically completes in 10-15 minutes):
+   - Check [GitHub Actions](https://github.com/rust84/kubesearch-mcp-server/actions) workflow status
+   - Review created release at [Releases](https://github.com/rust84/kubesearch-mcp-server/releases)
+   - Test Docker image: `docker pull ghcr.io/rust84/kubesearch-mcp-server:0.0.2`
+
+### Pre-releases
+
+For beta or alpha releases:
+
+```bash
+# Set pre-release version
+npm version 1.0.1-beta.1
+
+# Push commit and tag
+git push --follow-tags
+```
+
+Pre-release tags (with `-beta`, `-alpha`, etc.) create GitHub pre-releases that are not marked as "latest".
 
 ## Credits
 
