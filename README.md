@@ -169,10 +169,35 @@ Works on:
 
 ### Getting the Databases
 
+**Option 1: Download pre-built databases (Recommended)**
+
+Use the included download script to fetch the latest databases from GitHub releases:
+
+```bash
+# Download to current directory
+./download-databases.sh
+
+# Or use npm script
+npm run download-db
+
+# Or specify custom directory
+DOWNLOAD_DIR=/path/to/databases ./download-databases.sh
+```
+
+**Requirements:**
+- `wget` or `curl` (usually pre-installed)
+- `jq` - Install with: `sudo apt-get install jq` (Ubuntu/Debian) or `brew install jq` (macOS)
+
+The script will download:
+- `repos.db` (~5.7 MB) - Main database
+- `repos-extended.db` (~29.8 MB) - Extended database
+
+**Option 2: Build from source**
+
 Clone and build the k8s-at-home-search project:
 
 ```bash
-git clone https://github.com/onedr0p/k8s-at-home-search
+git clone https://github.com/whazor/k8s-at-home-search
 cd k8s-at-home-search
 
 # Follow their build instructions to generate the databases
