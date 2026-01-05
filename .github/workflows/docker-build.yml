@@ -73,7 +73,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to GitHub Container Registry
-        if: inputs.push != false && github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -117,7 +117,7 @@ jobs:
           context: .
           file: ./Dockerfile
           platforms: ${{ inputs.platforms || 'linux/amd64,linux/arm64' }}
-          push: ${{ (inputs.push != false && github.event_name != 'pull_request') }}
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -126,7 +126,7 @@ jobs:
           sbom: true
 
       - name: Generate Docker attestation
-        if: inputs.enable-attestation && (inputs.push != false && github.event_name != 'pull_request')
+        if: inputs.enable-attestation && github.event_name != 'pull_request'
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
@@ -152,7 +152,7 @@ jobs:
 
       - name: Generate build summary
         run: |
-          PUSHED="${{ (inputs.push != false && github.event_name != 'pull_request') }}"
+          PUSHED="${{ github.event_name != 'pull_request' }}"
           echo "### Docker Image $([ \"$PUSHED\" = \"true\" ] && echo \"Published\" || echo \"Built\") ✅" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Registry:** \`${{ env.REGISTRY }}\`" >> $GITHUB_STEP_SUMMARY
