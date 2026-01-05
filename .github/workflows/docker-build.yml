@@ -6,9 +6,19 @@ on:
       - main
     tags-ignore:
       - '**'
+    paths:
+      - 'src/**'
+      - 'Dockerfile'
+      - 'package*.json'
+      - 'tsconfig.json'
   pull_request:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - 'Dockerfile'
+      - 'package*.json'
+      - 'tsconfig.json'
   workflow_dispatch:
   workflow_call:
     inputs:
