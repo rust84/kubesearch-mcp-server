@@ -17,6 +17,8 @@ jobs:
   validate:
     name: Validate Code Quality
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       version: ${{ steps.version.outputs.version }}
 
