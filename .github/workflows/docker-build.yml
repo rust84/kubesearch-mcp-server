@@ -141,6 +141,7 @@ jobs:
           image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
           fail-build: false
           severity-cutoff: high
+          only-fixed: true
           output-format: sarif
 
       - name: Upload Grype scan results to GitHub Security
