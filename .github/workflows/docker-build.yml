@@ -80,14 +80,31 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Determine tag rules
+        id: tag-rules
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_call" ]; then
+            cat <<'EOF' >> $GITHUB_OUTPUT
+          tags<<TAGEOF
+          ${{ inputs.tag-rules }}
+          TAGEOF
+          EOF
+          else
+            cat <<'EOF' >> $GITHUB_OUTPUT
+          tags<<TAGEOF
+          type=ref,event=branch
+          type=ref,event=pr
+          type=raw,value=latest,enable={{is_default_branch}}
+          TAGEOF
+          EOF
+          fi
+
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: ${{ inputs.tag-rules || 'type=ref,event=branch
-            type=ref,event=pr
-            type=raw,value=latest,enable={{is_default_branch}}' }}
+          tags: ${{ steps.tag-rules.outputs.tags }}
           labels: |
             org.opencontainers.image.title=KubeSearch MCP Server
             org.opencontainers.image.description=MCP server for k8s-at-home-search
