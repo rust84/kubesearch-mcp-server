@@ -181,7 +181,7 @@ export interface Config {
 export const MINIMUM_COUNT = 3;
 
 export const SEARCH_WEIGHTS = {
-  fullMatch: 10,
+  fullMatch: 100,  // Significantly increased to always prioritize exact matches
   length: 1,
   count: 5,     // No longer used (was deployment count per aggregated chart)
   stars: 0.1,   // Weight for individual repository GitHub stars (0.1 = 10 stars = 1 point)

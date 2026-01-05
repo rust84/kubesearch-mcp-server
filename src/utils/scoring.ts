@@ -40,9 +40,11 @@ export function calculateScore(
 ): number {
   const normalizedQuery = query.toLowerCase();
   const normalizedName = release.name.toLowerCase();
+  const normalizedChart = release.chart.toLowerCase();
 
-  // Calculate full match score
-  const fullMatchScore = normalizedName === normalizedQuery ? SEARCH_WEIGHTS.fullMatch : 0;
+  // Calculate full match score - check both release name and chart name
+  const isExactMatch = normalizedName === normalizedQuery || normalizedChart === normalizedQuery;
+  const fullMatchScore = isExactMatch ? SEARCH_WEIGHTS.fullMatch : 0;
 
   // Calculate length score based on how much longer the name is compared to the query
   const lengthScore = (release.name.length - query.length) * SEARCH_WEIGHTS.length;
