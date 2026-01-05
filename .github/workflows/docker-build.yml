@@ -4,23 +4,63 @@ on:
   push:
     branches:
       - main
+    tags-ignore:
+      - '**'
   pull_request:
     branches:
       - main
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      push:
+        description: 'Whether to push the image to registry'
+        required: false
+        type: boolean
+        default: true
+      platforms:
+        description: 'Target platforms for build'
+        required: false
+        type: string
+        default: 'linux/amd64,linux/arm64'
+      tag-rules:
+        description: 'Tag rules for docker/metadata-action'
+        required: false
+        type: string
+        default: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=raw,value=latest,enable={{is_default_branch}}
+      enable-attestation:
+        description: 'Enable build provenance attestation'
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      digest:
+        description: 'Image digest'
+        value: ${{ jobs.build.outputs.digest }}
+      tags:
+        description: 'Image tags'
+        value: ${{ jobs.build.outputs.tags }}
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-and-push:
-    name: Build and Push Multi-Platform Image
+  build:
+    name: Build and Push Docker Image
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_call' || github.event_name != 'pull_request'
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
+      security-events: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+      tags: ${{ steps.meta.outputs.tags }}
 
     steps:
       - name: Checkout code
@@ -33,32 +73,127 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to GitHub Container Registry
+        if: inputs.push != false && github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
+      - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
+          tags: ${{ inputs.tag-rules || 'type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable={{is_default_branch}}' }}
+          labels: |
+            org.opencontainers.image.title=KubeSearch MCP Server
+            org.opencontainers.image.description=MCP server for k8s-at-home-search
+            org.opencontainers.image.vendor=rust84
 
-      - name: Build and push
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: ${{ inputs.platforms || 'linux/amd64,linux/arm64' }}
+          push: ${{ (inputs.push != false && github.event_name != 'pull_request') }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+      - name: Generate Docker attestation
+        if: inputs.enable-attestation && (inputs.push != false && github.event_name != 'pull_request')
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      - name: Run Grype security scan
+        if: inputs.push != false && github.event_name != 'pull_request'
+        uses: anchore/scan-action@v5
+        id: grype-scan
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+          fail-build: false
+          severity-cutoff: critical
+          output-format: sarif
+
+      - name: Upload Grype scan results to GitHub Security
+        if: inputs.push != false && github.event_name != 'pull_request'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.grype-scan.outputs.sarif }}
+          category: grype-docker-scan
+
+      - name: Generate build summary
+        run: |
+          PUSHED="${{ (inputs.push != false && github.event_name != 'pull_request') }}"
+          echo "### Docker Image $([ \"$PUSHED\" = \"true\" ] && echo \"Published\" || echo \"Built\") ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry:** \`${{ env.REGISTRY }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Repository:** \`${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "$PUSHED" = "true" ]; then
+            echo "**Digest:** \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "**Platforms:** ${{ inputs.platforms || 'linux/amd64,linux/arm64' }}" >> $GITHUB_STEP_SUMMARY
+          if [ "$PUSHED" = "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Usage:**" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+            echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  build-pr:
+    name: Build PR Image (No Push)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: type=ref,event=pr
+          labels: |
+            org.opencontainers.image.title=KubeSearch MCP Server
+            org.opencontainers.image.description=MCP server for k8s-at-home-search
+            org.opencontainers.image.vendor=rust84
+
+      - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: true
+          push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -68,7 +203,7 @@ jobs:
 
       - name: Generate build summary
         run: |
-          echo "### Docker Image Published ✅" >> $GITHUB_STEP_SUMMARY
+          echo "### Docker Image Built ✅" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Registry:** \`${{ env.REGISTRY }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Repository:** \`${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
@@ -79,8 +214,3 @@ jobs:
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Platforms:** linux/amd64, linux/arm64" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Usage:**" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
