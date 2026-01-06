@@ -1,6 +1,6 @@
 # Stage 1: Build
 # Install dependencies and compile TypeScript + native modules
-FROM node:22-slim AS builder
+FROM node:24-slim AS builder
 
 # Install build dependencies for native modules (sqlite3)
 # python3, make, g++ are required for node-gyp to compile C++ bindings
@@ -28,7 +28,7 @@ RUN npm run build
 
 # Stage 2: Production Runtime
 # Lean image with only compiled code and runtime dependencies
-FROM node:22-slim
+FROM node:24-slim
 
 WORKDIR /app
 
