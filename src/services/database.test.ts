@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { DatabaseManager } from './database.js';
 import type { Config } from '../types/kubesearch.js';
+import type { Database } from 'sqlite';
 
 // Mock sqlite and sqlite3 modules - must be defined inline in the factory
 vi.mock('sqlite', () => ({
@@ -26,10 +27,10 @@ describe('DatabaseManager', () => {
     AUTHOR_WEIGHTS: {},
   };
 
-  // Create mock database objects
+  // Create mock database objects with type assertions
   const mockClose = vi.fn();
-  const mockDb = { close: mockClose };
-  const mockDbExtended = { close: mockClose };
+  const mockDb = { close: mockClose } as unknown as Database;
+  const mockDbExtended = { close: mockClose } as unknown as Database;
   const mockOpen = vi.mocked(open);
 
   // Suppress console.log during tests
