@@ -36,10 +36,6 @@ on:
         description: 'Tag rules for docker/metadata-action'
         required: false
         type: string
-        default: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=raw,value=latest,enable={{is_default_branch}}
       enable-attestation:
         description: 'Enable build provenance attestation'
         required: false
@@ -90,31 +86,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Determine tag rules
-        id: tag-rules
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_call" ]; then
-            cat <<'EOF' >> $GITHUB_OUTPUT
-          tags<<TAGEOF
-          ${{ inputs.tag-rules }}
-          TAGEOF
-          EOF
-          else
-            cat <<'EOF' >> $GITHUB_OUTPUT
-          tags<<TAGEOF
-          type=ref,event=branch
-          type=ref,event=pr
-          type=raw,value=latest,enable={{is_default_branch}}
-          TAGEOF
-          EOF
-          fi
-
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: ${{ steps.tag-rules.outputs.tags }}
+          tags: |
+            ${{ inputs.tag-rules || 'type=ref,event=branch
+            type=ref,event=pr
+            type=raw,value=latest,enable={{is_default_branch}}' }}
           labels: |
             org.opencontainers.image.title=KubeSearch MCP Server
             org.opencontainers.image.description=MCP server for k8s-at-home-search
@@ -163,29 +143,13 @@ jobs:
 
       - name: Generate build summary
         run: |
-          PUSHED="${{ github.event_name != 'pull_request' }}"
-          echo "### Docker Image $([ \"$PUSHED\" = \"true\" ] && echo \"Published\" || echo \"Built\") ✅" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Registry:** \`${{ env.REGISTRY }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Repository:** \`${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "$PUSHED" = "true" ]; then
-            echo "**Digest:** \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "**Platforms:** ${{ inputs.platforms || 'linux/amd64,linux/arm64' }}" >> $GITHUB_STEP_SUMMARY
-          if [ "$PUSHED" = "true" ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Usage:**" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-            echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          fi
+          cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ### Docker Image Published
+
+          **Image:** \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}\`
+          **Digest:** \`${{ steps.build.outputs.digest }}\`
+          **Platforms:** ${{ inputs.platforms || 'linux/amd64,linux/arm64' }}
+          EOF
 
   build-pr:
     name: Build PR Image (No Push)
@@ -231,14 +195,9 @@ jobs:
 
       - name: Generate build summary
         run: |
-          echo "### Docker Image Built ✅" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Registry:** \`${{ env.REGISTRY }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Repository:** \`${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Platforms:** linux/amd64, linux/arm64" >> $GITHUB_STEP_SUMMARY
+          cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ### Docker Image Built
+
+          **Image:** \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}\`
+          **Platforms:** linux/amd64, linux/arm64
+          EOF
