@@ -127,13 +127,13 @@ export async function getChartDetails(
     key,
     includeValues = true,
     valuesLimit: rawValuesLimit = 5,
-    pathsLimit: rawPathsLimit = 10,
+    pathsLimit: rawPathsLimit = 15,
     valuePath,
   } = input;
 
   // Enforce upper bounds
   const valuesLimit = Math.min(rawValuesLimit, 10);
-  const pathsLimit = Math.min(rawPathsLimit, 20);
+  const pathsLimit = Math.min(rawPathsLimit, 50);
 
   // Collect all releases
   const collectorData = await dataCollector.collectReleases();
@@ -278,8 +278,8 @@ export const getChartDetailsSchema = {
       },
       pathsLimit: {
         type: 'number',
-        description: 'Maximum number of configuration paths to return (default: 10, max: 20)',
-        default: 10,
+        description: 'Maximum number of configuration paths to return (default: 15, max: 50)',
+        default: 15,
       },
       valuePath: {
         type: 'string',
