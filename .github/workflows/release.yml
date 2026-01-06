@@ -151,7 +151,7 @@ jobs:
 
             ---
 
-            **Full Changelog**: https://github.com/${{ github.repository }}/compare/v${{ steps.changelog.outputs.fromTag }}...${{ needs.prepare.outputs.tag_version }}
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.changelog.outputs.fromTag }}...${{ needs.prepare.outputs.tag_version }}
           draft: false
           prerelease: ${{ contains(needs.prepare.outputs.tag_version, '-') }}
           generateReleaseNotes: false
