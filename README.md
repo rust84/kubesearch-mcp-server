@@ -14,6 +14,7 @@ An MCP (Model Context Protocol) server that provides tools to query [k8s-at-home
 ## Data Source
 
 This MCP server queries a local k8s-at-home-search SQLite database containing:
+
 - 16,240+ Flux HelmReleases
 - 4,708+ Helm Repositories
 - 147+ Argo CD Applications
@@ -52,8 +53,10 @@ Add to your Claude Desktop configuration (`~/.config/Claude/claude_desktop_confi
         "--init",
         "-i",
         "--rm",
-        "-v", "/absolute/path/to/repos.db:/data/repos.db:ro",
-        "-v", "/absolute/path/to/repos-extended.db:/data/repos-extended.db:ro",
+        "-v",
+        "/absolute/path/to/repos.db:/data/repos.db:ro",
+        "-v",
+        "/absolute/path/to/repos-extended.db:/data/repos-extended.db:ro",
         "ghcr.io/rust84/kubesearch-mcp-server:latest"
       ]
     }
@@ -86,6 +89,7 @@ The container requires two SQLite database files to be mounted:
 **Mount location:** `/data/`
 
 These files are NOT included in the Docker image. You must:
+
 1. Download the databases (see Prerequisites section below)
 2. Mount them as read-only volumes when running the container
 
@@ -120,6 +124,7 @@ docker pull --platform linux/arm64 ghcr.io/rust84/kubesearch-mcp-server:latest
 ```
 
 Works on:
+
 - x86_64 Linux/Windows/macOS
 - Apple Silicon (M1/M2/M3)
 - ARM64 servers (AWS Graviton, etc.)
@@ -149,10 +154,12 @@ DOWNLOAD_DIR=/path/to/databases ./download-databases.sh
 ```
 
 **Requirements:**
+
 - `wget` or `curl` (usually pre-installed)
 - `jq` - Install with: `sudo apt-get install jq` (Ubuntu/Debian) or `brew install jq` (macOS)
 
 The script will download:
+
 - `repos.db` (~5.7 MB) - Main database
 - `repos-extended.db` (~29.8 MB) - Extended database
 
@@ -203,14 +210,15 @@ export KUBESEARCH_DB_EXTENDED_PATH=/path/to/k8s-at-home-search/repos-extended.db
 You can customize which chart authors get boosted in search results by setting the `AUTHOR_WEIGHTS` environment variable with a JSON object:
 
 **Default weights** (if not specified):
+
 ```json
 {
-  "bjw-s": 1.1,
-  "onedr0p": 1.1
+  "bjw-s": 1.5
 }
 ```
 
 **Examples:**
+
 ```bash
 # Boost bjw-s charts by 100%
 AUTHOR_WEIGHTS='{"bjw-s": 2.0}'
@@ -235,6 +243,7 @@ Add to your Claude Desktop configuration file:
 **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
 **Basic configuration:**
+
 ```json
 {
   "mcpServers": {
@@ -251,6 +260,7 @@ Add to your Claude Desktop configuration file:
 ```
 
 **With custom author weights:**
+
 ```json
 {
   "mcpServers": {
@@ -284,10 +294,12 @@ node /path/to/kubesearch-mcp-server/dist/index.js
 Search for real-world **deployment examples** from community repositories. Returns individual deployments showing how users configure and deploy Helm charts, ranked by repository quality (stars) and author reputation. Use this to find example configurations to learn from.
 
 **Parameters:**
+
 - `query` (string, required) - Chart or release name (e.g., "plex", "traefik")
 - `limit` (number, optional) - Max results to return (default: 10, max: 100)
 
 **Example:**
+
 ```typescript
 {
   "query": "radarr",
@@ -296,6 +308,7 @@ Search for real-world **deployment examples** from community repositories. Retur
 ```
 
 **Returns individual deployments:**
+
 ```json
 [
   {
@@ -318,10 +331,12 @@ Search for real-world **deployment examples** from community repositories. Retur
 List all available chart sources (helm repositories) for a given chart name with deployment counts. Compare official repos vs mirrors vs community forks to choose the most popular/reliable source.
 
 **Parameters:**
+
 - `query` (string, required) - Chart or release name to search for (e.g., "openebs", "plex")
 - `minCount` (number, optional) - Minimum number of repositories required to include a chart (default: 3)
 
 **Examples:**
+
 ```typescript
 // Find all chart paths for "openebs"
 {
@@ -337,6 +352,7 @@ List all available chart sources (helm repositories) for a given chart name with
 ```
 
 **Returns:**
+
 ```json
 [
   {
@@ -359,6 +375,7 @@ List all available chart sources (helm repositories) for a given chart name with
 ```
 
 **Use cases:**
+
 - "Show me all the different sources for this chart" - Compare official vs mirror vs community repos
 - "Which chart path is most popular?" - See deployment counts to choose the most reliable source
 - "Are there multiple versions of this chart?" - Discover different helm repo sources
@@ -369,13 +386,15 @@ List all available chart sources (helm repositories) for a given chart name with
 Get detailed information about a specific Helm chart including repositories using it and popular configuration values.
 
 **Parameters:**
+
 - `key` (string, required) - Chart key from search results
 - `includeValues` (boolean, optional) - Include values analysis (default: true)
 - `valuesLimit` (number, optional) - Max value variations per path (default: 5, max: 10)
-- `pathsLimit` (number, optional) - Max configuration paths to return (default: 10, max: 20)
+- `pathsLimit` (number, optional) - Max configuration paths to return (default: 15, max: 50)
 - `valuePath` (string, optional) - Filter to specific configuration path prefix (e.g., "persistence")
 
 **Examples:**
+
 ```typescript
 // Get all chart details
 {
@@ -405,13 +424,15 @@ Get detailed information about a specific Helm chart including repositories usin
 ```
 
 **Important - Avoiding Token Limits:**
+
 - Broad searches (e.g., `valuePath: "persistence"`) can return large results
 - Use `get_chart_index` first to explore available paths
 - Then target specific paths (e.g., `valuePath: "persistence.incomplete"`)
 - Keep `valuesLimit` low (5 or less) for exploratory queries
-- Upper bounds are enforced: `valuesLimit` max 10, `pathsLimit` max 20
+- Upper bounds are enforced: `valuesLimit` max 10, `pathsLimit` max 50
 
 **Returns:**
+
 - Chart metadata (name, helm repo URL)
 - Popular Helm values with all variations sorted by repository quality
 - Statistics (total repos, avg stars, latest version)
@@ -421,10 +442,12 @@ Get detailed information about a specific Helm chart including repositories usin
 Explore what configuration paths are available in a chart by listing all paths found across real-world deployments. This helps discover what settings can be configured before diving into the actual values.
 
 **Parameters:**
+
 - `key` (string, required) - Chart key from search results
 - `searchPath` (string, optional) - Filter to paths starting with this prefix (e.g., "persistence")
 
 **Examples:**
+
 ```typescript
 // List all available configuration paths
 {
@@ -445,6 +468,7 @@ Explore what configuration paths are available in a chart by listing all paths f
 ```
 
 **Returns:**
+
 ```json
 {
   "name": "plex",
@@ -472,6 +496,7 @@ Explore what configuration paths are available in a chart by listing all paths f
 ```
 
 **Use cases:**
+
 - "What can I configure in this chart?" - Get the full index
 - "What persistence options exist?" - Filter with `searchPath: "persistence"`
 - "How is ingress typically configured?" - Filter with `searchPath: "ingress"`
@@ -482,9 +507,11 @@ Explore what configuration paths are available in a chart by listing all paths f
 Get statistics and metrics about a specific Helm chart source including deployment count, repository quality metrics (stars), version distribution, and top repositories. Requires a chart key from `list_chart_sources` or `search_deployments`.
 
 **Parameters:**
+
 - `key` (string, required) - Chart key (e.g., "ghcr.io-home-operations-charts-mirror-openebs-openebs")
 
 **Examples:**
+
 ```typescript
 // Get stats for a specific chart source
 {
@@ -500,6 +527,7 @@ Get statistics and metrics about a specific Helm chart source including deployme
 ```
 
 **Returns:**
+
 ```json
 {
   "name": "plex",
@@ -545,6 +573,7 @@ Get statistics and metrics about a specific Helm chart source including deployme
 ```
 
 **Use cases:**
+
 - "How many people are using this chart?" - Check totalDeployments
 - "What's the most popular version?" - See versionDistribution
 - "Which high-quality repos use this?" - View topRepositories sorted by stars
@@ -555,10 +584,12 @@ Get statistics and metrics about a specific Helm chart source including deployme
 Find deployments using specific container images.
 
 **Parameters:**
+
 - `image` (string, required) - Image repository to search for
 - `limit` (number, optional) - Max results (default: 20)
 
 **Example:**
+
 ```typescript
 {
   "image": "ghcr.io/linuxserver/plex",
@@ -567,6 +598,7 @@ Find deployments using specific container images.
 ```
 
 **Returns:**
+
 ```json
 [
   {
@@ -604,6 +636,7 @@ npm run dev
 The project uses [Vitest](https://vitest.dev/) for unit and integration testing.
 
 **Run tests:**
+
 ```bash
 # Run tests once
 npm test
@@ -619,6 +652,7 @@ npm run test:ui
 ```
 
 **Testing approach:**
+
 - **Unit tests** - Pure functions, utilities, services (with mocked dependencies)
 - **Integration tests** - MCP tools with mocked data collectors
 - **Mocking** - Database interactions mocked to avoid external dependencies
@@ -653,7 +687,7 @@ kubesearch-mcp-server/
 
 1. **Database Access** - Opens read-only connections to both SQLite databases
 2. **Data Collection** - Executes SQL queries to aggregate releases, repositories, and values
-3. **Search Scoring** - Uses weighted scoring algorithm (exact match: 10pts, usage count: 5pts/use)
+3. **Search Scoring** - Uses weighted scoring algorithm (exact match: 100pts, stars: 0.1pts/star)
 4. **Value Flattening** - Walks YAML value trees to create searchable paths
 5. **MCP Protocol** - Exposes tools via stdio transport for MCP clients
 
@@ -664,47 +698,49 @@ kubesearch-mcp-server/
 The search scoring algorithm ranks **individual deployments** based on repository quality and author reputation:
 
 ```typescript
-baseScore = fullMatchScore - lengthScore + starsScore
-finalScore = baseScore * authorMultiplier
+baseScore = fullMatchScore - lengthScore + starsScore;
+finalScore = baseScore * authorMultiplier;
 
-// fullMatchScore: 10 if exact match
+// fullMatchScore: 100 if exact match
 // lengthScore: (name.length - query.length) * 1
 // starsScore: stars * 0.1 (individual repository quality)
-// authorMultiplier: configurable per repository owner (default: bjw-s 1.1, onedr0p 1.1)
+// authorMultiplier: configurable per repository owner (default: bjw-s 1.5)
 ```
 
 **Scoring Components:**
 
-1. **Exact Match** (+10 points): Perfect name matches get a bonus
+1. **Exact Match** (+100 points): Perfect name matches get a significant bonus
 2. **GitHub Stars** (+0.1 points per star): Individual repository quality indicator
 3. **Name Length** (-1 point per extra character): Concise names preferred
-4. **Author Boost** (×1.1 default): Preferred community members' deployments get multiplier
+4. **Author Boost** (×1.5 default for bjw-s): Preferred community members' deployments get multiplier
 
 **Important:** Author boost applies to the **repository owner** (e.g., onedr0p, bjw-s), not the chart maintainer.
 
 **Example: "radarr" search results**
 
 1. **onedr0p/home-ops** (2670 stars):
-   - Base: 10 (exact) + 267 (2670×0.1) = 277
-   - Final: 277 × 1.1 (onedr0p author boost) = **304.7**
+   - Base: 100 (exact) + 267 (2670×0.1) = 367
+   - Final: **367** (no author boost)
 
-2. **billimek/k8s-gitops** (748 stars):
-   - Base: 10 + 74.8 = 84.8
-   - Final: **84.8** (no author boost)
+2. **bjw-s/home-ops** (395 stars):
+   - Base: 100 + 39.5 = 139.5
+   - Final: 139.5 × 1.5 (bjw-s author boost) = **209.3**
 
-3. **bjw-s/home-ops** (395 stars):
-   - Base: 10 + 39.5 = 49.5
-   - Final: 49.5 × 1.1 (bjw-s author boost) = **54.5**
+3. **billimek/k8s-gitops** (748 stars):
+   - Base: 100 + 74.8 = 174.8
+   - Final: **174.8** (no author boost)
 
 **Stars Impact:**
+
 - 100 stars = +10 points
 - Uses individual repository stars (not averaged)
 - Directly rewards high-quality, well-maintained repositories
 
 **Author Weighting:**
+
 - Boosts deployments from preferred community members
 - Configured via `AUTHOR_WEIGHTS` environment variable
-- Default: `{"bjw-s": 1.1, "onedr0p": 1.1}`
+- Default: `{"bjw-s": 1.5}`
 
 ## Troubleshooting
 
@@ -748,6 +784,7 @@ docker pull ghcr.io/rust84/kubesearch-mcp-server:1.0
 ```
 
 **Available tags:**
+
 - `latest` - Latest stable release from main branch
 - `1.2.3` - Specific version (semantic versioning)
 - `1.2` - Latest patch version for minor release
@@ -760,6 +797,7 @@ docker pull ghcr.io/rust84/kubesearch-mcp-server:1.0
 Releases are automated when you create and push a version tag:
 
 1. **Update version and create tag**:
+
    ```bash
    npm version patch  # or minor, or major
    ```
@@ -770,6 +808,7 @@ Releases are automated when you create and push a version tag:
    - Creates a git tag (e.g., `v0.0.2`)
 
 2. **Push commit and tag**:
+
    ```bash
    git push --follow-tags
    ```
