@@ -42,12 +42,6 @@ export default defineConfig({
 
     // Performance
     isolate: true, // Run tests in isolation (slower but safer)
-    pool: 'threads', // Use worker threads for parallel execution
-    poolOptions: {
-      threads: {
-        singleThread: false,
-      },
-    },
 
     // Test timeout
     testTimeout: 10000, // 10 seconds (generous for database operations)
