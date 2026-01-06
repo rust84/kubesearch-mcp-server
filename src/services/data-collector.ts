@@ -66,7 +66,7 @@ export function releaseKey(_url: string, chart_name: string, release_name: strin
 
   return key
     .replaceAll(/\s+/g, '-')
-    .replaceAll(/[^a-zA-Z0-9\.\-]/gi, '')
+    .replaceAll(/[^a-zA-Z0-9.-]/gi, '')
     .replaceAll(/^\.+/g, '')
     .toLowerCase();
 }
@@ -167,7 +167,7 @@ export class DataCollector {
     const rows = await db.all<FluxHelmReleaseRow[]>(query);
 
     for (const row of rows) {
-      const { chart_name, chart_version, release_name } = row;
+      const { chart_name, release_name } = row;
       const helm_repo_url = mergeHelmURL(row.helm_repo_url);
 
       const key = releaseKey(helm_repo_url, chart_name, release_name);

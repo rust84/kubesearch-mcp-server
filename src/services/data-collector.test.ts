@@ -169,8 +169,8 @@ describe('DataCollector', () => {
   describe('DataCollector class', () => {
     let dataCollector: DataCollector;
     let mockDbManager: DatabaseManager;
-    let mockDb: any;
-    let mockDbExtended: any;
+    let mockDb: { all: ReturnType<typeof vi.fn>; get: ReturnType<typeof vi.fn> };
+    let mockDbExtended: { all: ReturnType<typeof vi.fn>; get: ReturnType<typeof vi.fn> };
 
     beforeEach(() => {
       mockDb = {

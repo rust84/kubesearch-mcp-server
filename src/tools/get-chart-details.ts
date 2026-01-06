@@ -23,8 +23,8 @@ function flattenValueTree(
   repoUrl: string,
   stars: number,
   prefix: string = ''
-): Map<string, { values: Array<{ value: any; repo: string; repoUrl: string; stars: number }>; types: Set<string> }> {
-  const result = new Map<string, { values: Array<{ value: any; repo: string; repoUrl: string; stars: number }>; types: Set<string> }>();
+): Map<string, { values: Array<{ value: unknown; repo: string; repoUrl: string; stars: number }>; types: Set<string> }> {
+  const result = new Map<string, { values: Array<{ value: unknown; repo: string; repoUrl: string; stars: number }>; types: Set<string> }>();
 
   // Guard against null/undefined values
   if (!tree || typeof tree !== 'object') {
@@ -145,7 +145,7 @@ export async function getChartDetails(
   let popularValues: ChartDetailsResult['popularValues'] = undefined;
 
   if (includeValues) {
-    const allValuePaths = new Map<string, { values: Array<{ value: any; repo: string; repoUrl: string; stars: number }>; types: Set<string> }>();
+    const allValuePaths = new Map<string, { values: Array<{ value: unknown; repo: string; repoUrl: string; stars: number }>; types: Set<string> }>();
 
     // Flatten all value trees with repo info
     for (const repo of repos) {

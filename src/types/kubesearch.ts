@@ -46,7 +46,7 @@ export interface ValueList {
 export interface ValuesData {
   list: ValueList[];
   urlMap: Record<number, string>;
-  valueMap: Record<string, Record<number, any[]>>;
+  valueMap: Record<string, Record<number, unknown[]>>;
 }
 
 export interface CollectorData {
@@ -95,7 +95,7 @@ export interface GrepValueResult {
   valuePath: string;
   count: number;
   examples: Array<{
-    value: any;
+    value: unknown;
     repoUrl: string;
   }>;
 }
@@ -111,7 +111,7 @@ export interface ChartDetailsResult {
     count: number;
     types: string[];
     values: Array<{
-      value: any;
+      value: unknown;
       repo: string;
       repoUrl: string;
       score: number;

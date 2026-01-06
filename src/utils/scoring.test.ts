@@ -3,9 +3,6 @@ import { calculateScore, simplifyURL, matchesQuery } from './scoring.js';
 import { SEARCH_WEIGHTS } from '../types/kubesearch.js';
 import {
   mockReleaseInfo,
-  mockReleaseInfo2,
-  mockReleaseInfoDifferentNames,
-  mockReleaseInfoHighStars,
   createMockRelease,
 } from '../test/fixtures.js';
 

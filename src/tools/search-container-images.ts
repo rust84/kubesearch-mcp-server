@@ -14,16 +14,14 @@ export interface SearchContainerImagesInput {
 /**
  * Extract container images from a value tree
  */
-function extractImages(tree: ValueTree, url: string): Map<string, Set<string>> {
+function extractImages(tree: ValueTree): Map<string, Set<string>> {
   const images = new Map<string, Set<string>>();
 
-  function walk(obj: any, path: string = '') {
+  function walk(obj: unknown) {
     if (obj === null || obj === undefined) return;
 
     if (typeof obj === 'object') {
       for (const [key, value] of Object.entries(obj)) {
-        const currentPath = path ? `${path}.${key}` : key;
-
         // Check if this looks like an image field
         if (
           (key === 'repository' || key === 'image') &&
@@ -44,7 +42,7 @@ function extractImages(tree: ValueTree, url: string): Map<string, Set<string>> {
         }
 
         // Recurse
-        walk(value, currentPath);
+        walk(value);
       }
     }
   }
@@ -67,7 +65,7 @@ export async function searchContainerImages(
 
   // Extract images from all values
   for (const [url, valueTree] of Object.entries(collectorData.values)) {
-    const imagesInTree = extractImages(valueTree, url);
+    const imagesInTree = extractImages(valueTree);
 
     for (const [repository, tags] of imagesInTree) {
       if (!imageMap.has(repository)) {
