@@ -12,7 +12,7 @@ export interface GetChartStatsInput {
 
 export async function getChartStats(
   dataCollector: DataCollector,
-  input: GetChartStatsInput
+  input: GetChartStatsInput,
 ): Promise<ChartStatsResult> {
   const { key } = input;
 
@@ -33,12 +33,12 @@ export async function getChartStats(
   const icon = firstRepo.icon || undefined;
 
   // Find a release with this key to get the chart name
-  const matchingRelease = collectorData.releases.find(r => r.key === key);
+  const matchingRelease = collectorData.releases.find((r) => r.key === key);
   const chartName = matchingRelease?.chart || name;
 
   // Calculate statistics
   const totalDeployments = repos.length;
-  const stars = repos.map(r => r.stars);
+  const stars = repos.map((r) => r.stars);
   const minStars = Math.min(...stars);
   const maxStars = Math.max(...stars);
 
@@ -60,7 +60,7 @@ export async function getChartStats(
   const topRepositories = repos
     .sort((a, b) => b.stars - a.stars)
     .slice(0, 10)
-    .map(r => ({
+    .map((r) => ({
       repo: r.repo,
       repoUrl: r.repo_url,
       stars: r.stars,
@@ -86,13 +86,15 @@ export async function getChartStats(
 
 export const getChartStatsSchema = {
   name: 'get_chart_stats',
-  description: 'Get statistics and metrics about a specific Helm chart source including deployment count, repository quality metrics (stars), version distribution, and top repositories. Requires a chart key - use list_chart_sources first to find available chart keys.',
+  description:
+    'Get statistics and metrics about a specific Helm chart source including deployment count, repository quality metrics (stars), version distribution, and top repositories. Requires a chart key - use list_chart_sources first to find available chart keys.',
   inputSchema: {
     type: 'object',
     properties: {
       key: {
         type: 'string',
-        description: 'Chart key from list_chart_sources or search_deployments results (e.g., "ghcr.io-home-operations-charts-mirror-openebs-openebs")',
+        description:
+          'Chart key from list_chart_sources or search_deployments results (e.g., "ghcr.io-home-operations-charts-mirror-openebs-openebs")',
       },
     },
     required: ['key'],

@@ -67,12 +67,12 @@ describe('DatabaseManager', () => {
       expect(mockOpen).toHaveBeenCalledWith(
         expect.objectContaining({
           filename: mockConfig.DB_PATH,
-        })
+        }),
       );
       expect(mockOpen).toHaveBeenCalledWith(
         expect.objectContaining({
           filename: mockConfig.DB_EXTENDED_PATH,
-        })
+        }),
       );
       expect(console.log).toHaveBeenCalledWith('Database connections established');
     });
@@ -85,7 +85,7 @@ describe('DatabaseManager', () => {
       expect(mockOpen).toHaveBeenCalledWith(
         expect.objectContaining({
           mode: 1, // OPEN_READONLY
-        })
+        }),
       );
     });
 
@@ -211,7 +211,7 @@ describe('DatabaseManager', () => {
 
     it('should throw error when called before open', () => {
       expect(() => dbManager.getDbExtended()).toThrow(
-        'Extended database not initialized. Call open() first.'
+        'Extended database not initialized. Call open() first.',
       );
     });
 
@@ -223,7 +223,7 @@ describe('DatabaseManager', () => {
       await dbManager.close();
 
       expect(() => dbManager.getDbExtended()).toThrow(
-        'Extended database not initialized. Call open() first.'
+        'Extended database not initialized. Call open() first.',
       );
     });
   });
@@ -275,7 +275,7 @@ describe('DatabaseManager', () => {
       expect(mockOpen).toHaveBeenCalledWith(
         expect.objectContaining({
           filename: '/custom/path/main.db',
-        })
+        }),
       );
     });
 
@@ -294,7 +294,7 @@ describe('DatabaseManager', () => {
       expect(mockOpen).toHaveBeenCalledWith(
         expect.objectContaining({
           filename: '/custom/path/extended.db',
-        })
+        }),
       );
     });
   });

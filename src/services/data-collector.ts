@@ -21,9 +21,12 @@ export function mergeHelmURL(url: string): string {
   const mapping: Record<string, string> = {
     'https://bjw-s.github.io/helm-charts/': 'oci://ghcr.io/bjw-s/helm/',
     'https://charts.bitnami.com/bitnami/': 'oci://registry-1.docker.io/bitnamicharts/',
-    'https://github.com/prometheus-community/helm-charts/': 'oci://ghcr.io/prometheus-community/charts/',
-    'https://prometheus-community.github.io/helm-charts/': 'oci://ghcr.io/prometheus-community/charts/',
-    'https://actions.github.io/actions-runner-controller/': 'oci://ghcr.io/actions/actions-runner-controller-charts/',
+    'https://github.com/prometheus-community/helm-charts/':
+      'oci://ghcr.io/prometheus-community/charts/',
+    'https://prometheus-community.github.io/helm-charts/':
+      'oci://ghcr.io/prometheus-community/charts/',
+    'https://actions.github.io/actions-runner-controller/':
+      'oci://ghcr.io/actions/actions-runner-controller-charts/',
     'https://kyverno.github.io/kyverno/': 'oci://ghcr.io/kyverno/charts/',
     'https://grafana.github.io/helm-charts/': 'oci://ghcr.io/grafana-operator/helm-charts/',
   };
@@ -218,7 +221,7 @@ export class DataCollector {
     const values: Record<string, ValueTree> = {};
 
     for (const key of keys) {
-      const urls = repos[key].map(r => r.url);
+      const urls = repos[key].map((r) => r.url);
       const valuesQuery = `
         select url, val
         from
@@ -243,8 +246,8 @@ export class DataCollector {
     }
 
     return {
-      releases,  // Individual deployments (no aggregation)
-      repos,     // Kept for backward compatibility
+      releases, // Individual deployments (no aggregation)
+      repos, // Kept for backward compatibility
       values,
     };
   }

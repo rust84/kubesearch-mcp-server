@@ -1,17 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { calculateScore, simplifyURL, matchesQuery } from './scoring.js';
 import { SEARCH_WEIGHTS } from '../types/kubesearch.js';
-import {
-  mockReleaseInfo,
-  createMockRelease,
-} from '../test/fixtures.js';
+import { mockReleaseInfo, createMockRelease } from '../test/fixtures.js';
 
 describe('scoring utilities', () => {
   describe('calculateScore', () => {
     describe('exact matches', () => {
       it('should give full match score for exact release name match', () => {
         const score = calculateScore(mockReleaseInfo, 'plex');
-        const expectedMinScore = SEARCH_WEIGHTS.fullMatch + (mockReleaseInfo.stars * SEARCH_WEIGHTS.stars);
+        const expectedMinScore =
+          SEARCH_WEIGHTS.fullMatch + mockReleaseInfo.stars * SEARCH_WEIGHTS.stars;
         expect(score).toBeGreaterThanOrEqual(expectedMinScore);
       });
 
@@ -28,8 +26,14 @@ describe('scoring utilities', () => {
       });
 
       it('should prioritize exact match over stars', () => {
-        const lowStarExactMatch = createMockRelease({ name: 'nginx', stars: 10 });
-        const highStarPartialMatch = createMockRelease({ name: 'nginx-ingress', stars: 1000 });
+        const lowStarExactMatch = createMockRelease({
+          name: 'nginx',
+          stars: 10,
+        });
+        const highStarPartialMatch = createMockRelease({
+          name: 'nginx-ingress',
+          stars: 1000,
+        });
 
         const exactScore = calculateScore(lowStarExactMatch, 'nginx');
         const partialScore = calculateScore(highStarPartialMatch, 'nginx');
@@ -41,7 +45,10 @@ describe('scoring utilities', () => {
     describe('length scoring', () => {
       it('should penalize longer names', () => {
         const shortRelease = createMockRelease({ name: 'plex', stars: 0 });
-        const longRelease = createMockRelease({ name: 'plex-media-server', stars: 0 });
+        const longRelease = createMockRelease({
+          name: 'plex-media-server',
+          stars: 0,
+        });
 
         const shortScore = calculateScore(shortRelease, 'plex', {});
         const longScore = calculateScore(longRelease, 'plex', {});
@@ -50,7 +57,11 @@ describe('scoring utilities', () => {
       });
 
       it('should calculate length penalty correctly', () => {
-        const release = createMockRelease({ name: 'plex-server', chart: 'other', stars: 0 });
+        const release = createMockRelease({
+          name: 'plex-server',
+          chart: 'other',
+          stars: 0,
+        });
         const query = 'plex';
         const score = calculateScore(release, query, {});
 
@@ -61,8 +72,16 @@ describe('scoring utilities', () => {
       });
 
       it('should favor shorter names when query is shorter', () => {
-        const short = createMockRelease({ name: 'app', chart: 'other', stars: 0 });
-        const long = createMockRelease({ name: 'application', chart: 'other', stars: 0 });
+        const short = createMockRelease({
+          name: 'app',
+          chart: 'other',
+          stars: 0,
+        });
+        const long = createMockRelease({
+          name: 'application',
+          chart: 'other',
+          stars: 0,
+        });
 
         const shortScore = calculateScore(short, 'a', {});
         const longScore = calculateScore(long, 'a', {});
@@ -73,8 +92,16 @@ describe('scoring utilities', () => {
 
     describe('stars scoring', () => {
       it('should add score based on stars count', () => {
-        const release1 = createMockRelease({ name: 'other', chart: 'other', stars: 100 });
-        const release2 = createMockRelease({ name: 'other', chart: 'other', stars: 200 });
+        const release1 = createMockRelease({
+          name: 'other',
+          chart: 'other',
+          stars: 100,
+        });
+        const release2 = createMockRelease({
+          name: 'other',
+          chart: 'other',
+          stars: 200,
+        });
 
         const score1 = calculateScore(release1, 'query', {});
         const score2 = calculateScore(release2, 'query', {});
@@ -98,7 +125,7 @@ describe('scoring utilities', () => {
 
     describe('author weights', () => {
       it('should multiply score by author weight when author matches', () => {
-        const authorWeights = { 'testuser': 1.5 };
+        const authorWeights = { testuser: 1.5 };
         const scoreWithWeight = calculateScore(mockReleaseInfo, 'plex', authorWeights);
         const scoreWithoutWeight = calculateScore(mockReleaseInfo, 'plex', {});
 
@@ -106,7 +133,7 @@ describe('scoring utilities', () => {
       });
 
       it('should not apply weight for non-matching authors', () => {
-        const authorWeights = { 'otheruser': 1.5 };
+        const authorWeights = { otheruser: 1.5 };
         const scoreWithWeight = calculateScore(mockReleaseInfo, 'plex', authorWeights);
         const scoreWithoutWeight = calculateScore(mockReleaseInfo, 'plex', {});
 
@@ -116,7 +143,7 @@ describe('scoring utilities', () => {
       it('should be case insensitive for author matching', () => {
         const release1 = createMockRelease({ repo: 'testuser/cluster' });
         const release2 = createMockRelease({ repo: 'TESTUSER/cluster' });
-        const authorWeights = { 'testuser': 1.5 };
+        const authorWeights = { testuser: 1.5 };
 
         const score1 = calculateScore(release1, 'plex', authorWeights);
         const score2 = calculateScore(release2, 'plex', authorWeights);
@@ -132,19 +159,28 @@ describe('scoring utilities', () => {
 
       it('should handle multiple authors with different weights', () => {
         const authorWeights = {
-          'author1': 1.5,
-          'author2': 2.0,
-          'author3': 1.2,
+          author1: 1.5,
+          author2: 2.0,
+          author3: 1.2,
         };
 
-        const release1 = createMockRelease({ repo: 'author1/cluster', stars: 100 });
-        const release2 = createMockRelease({ repo: 'author2/repo', stars: 100 });
-        const release3 = createMockRelease({ repo: 'author3/repo', stars: 100 });
+        const release1 = createMockRelease({
+          repo: 'author1/cluster',
+          stars: 100,
+        });
+        const release2 = createMockRelease({
+          repo: 'author2/repo',
+          stars: 100,
+        });
+        const release3 = createMockRelease({
+          repo: 'author3/repo',
+          stars: 100,
+        });
 
         const baseScore = calculateScore(
           createMockRelease({ repo: 'other/repo', stars: 100 }),
           'plex',
-          {}
+          {},
         );
 
         const score1 = calculateScore(release1, 'plex', authorWeights);
@@ -159,7 +195,7 @@ describe('scoring utilities', () => {
       it('should not apply weight when author weights object is empty', () => {
         const release = createMockRelease({ repo: 'testuser/cluster' });
         const score = calculateScore(release, 'plex', {});
-        const baseScore = SEARCH_WEIGHTS.fullMatch + (release.stars * SEARCH_WEIGHTS.stars);
+        const baseScore = SEARCH_WEIGHTS.fullMatch + release.stars * SEARCH_WEIGHTS.stars;
         expect(score).toBe(baseScore);
       });
     });
@@ -184,13 +220,19 @@ describe('scoring utilities', () => {
       });
 
       it('should handle special characters in query', () => {
-        const release = createMockRelease({ name: 'app-v1.0', chart: 'app-v1.0' });
+        const release = createMockRelease({
+          name: 'app-v1.0',
+          chart: 'app-v1.0',
+        });
         const score = calculateScore(release, 'app-v1.0');
         expect(score).toBeGreaterThanOrEqual(SEARCH_WEIGHTS.fullMatch);
       });
 
       it('should handle unicode characters', () => {
-        const release = createMockRelease({ name: 'app-测试', chart: 'app-测试' });
+        const release = createMockRelease({
+          name: 'app-测试',
+          chart: 'app-测试',
+        });
         const score = calculateScore(release, 'app-测试');
         expect(score).toBeGreaterThanOrEqual(SEARCH_WEIGHTS.fullMatch);
       });
@@ -198,7 +240,11 @@ describe('scoring utilities', () => {
 
     describe('combined scoring scenarios', () => {
       it('should correctly calculate score for partial match with stars', () => {
-        const release = createMockRelease({ name: 'nginx-ingress', chart: 'other', stars: 100 });
+        const release = createMockRelease({
+          name: 'nginx-ingress',
+          chart: 'other',
+          stars: 100,
+        });
         const score = calculateScore(release, 'nginx', {});
 
         // No fullMatch, length penalty = 13 - 5 = 8, stars = 100 * 0.1 = 10
@@ -213,12 +259,12 @@ describe('scoring utilities', () => {
           stars: 200,
           repo: 'testuser/cluster',
         });
-        const authorWeights = { 'testuser': 1.5 };
+        const authorWeights = { testuser: 1.5 };
         const score = calculateScore(release, 'plex', authorWeights);
 
         // Base score: fullMatch(100) - length(0) + stars(20) = 120
         // With author weight: 120 * 1.5 = 180
-        const expectedScore = (SEARCH_WEIGHTS.fullMatch + (200 * SEARCH_WEIGHTS.stars)) * 1.5;
+        const expectedScore = (SEARCH_WEIGHTS.fullMatch + 200 * SEARCH_WEIGHTS.stars) * 1.5;
         expect(score).toBe(expectedScore);
       });
     });
@@ -273,7 +319,10 @@ describe('scoring utilities', () => {
     });
 
     it('should match on release name', () => {
-      const release = createMockRelease({ release: 'my-plex-release', chart: 'other' });
+      const release = createMockRelease({
+        release: 'my-plex-release',
+        chart: 'other',
+      });
       expect(matchesQuery(release, 'plex')).toBe(true);
     });
 
@@ -302,7 +351,9 @@ describe('scoring utilities', () => {
     });
 
     it('should match on URL without protocol', () => {
-      const release = createMockRelease({ chartsUrl: 'https://charts.bitnami.com/bitnami/' });
+      const release = createMockRelease({
+        chartsUrl: 'https://charts.bitnami.com/bitnami/',
+      });
       expect(matchesQuery(release, 'charts.bitnami.com')).toBe(true);
       expect(matchesQuery(release, 'bitnami')).toBe(true);
     });

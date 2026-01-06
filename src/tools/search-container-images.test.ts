@@ -30,7 +30,9 @@ describe('search-container-images', () => {
       },
     });
 
-    const results = await searchContainerImages(mockDataCollector, { image: 'plex' });
+    const results = await searchContainerImages(mockDataCollector, {
+      image: 'plex',
+    });
 
     expect(results.length).toBeGreaterThanOrEqual(0);
   });
@@ -42,7 +44,9 @@ describe('search-container-images', () => {
       values: {},
     });
 
-    const results = await searchContainerImages(mockDataCollector, { image: 'nonexistent' });
+    const results = await searchContainerImages(mockDataCollector, {
+      image: 'nonexistent',
+    });
 
     expect(results).toEqual([]);
   });
@@ -65,7 +69,9 @@ describe('search-container-images', () => {
       },
     });
 
-    const results = await searchContainerImages(mockDataCollector, { image: 'nginx' });
+    const results = await searchContainerImages(mockDataCollector, {
+      image: 'nginx',
+    });
 
     expect(results.length).toBeGreaterThanOrEqual(0);
   });

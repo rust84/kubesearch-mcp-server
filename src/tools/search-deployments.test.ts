@@ -22,7 +22,9 @@ describe('search-deployments', () => {
 
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue(mockCollectorData);
 
-      const results = await searchDeployments(mockDataCollector, { query: 'plex' });
+      const results = await searchDeployments(mockDataCollector, {
+        query: 'plex',
+      });
 
       expect(results).toHaveLength(1);
       expect(results[0].name).toBe('plex');
@@ -38,7 +40,9 @@ describe('search-deployments', () => {
 
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue(mockCollectorData);
 
-      const results = await searchDeployments(mockDataCollector, { query: 'pl' });
+      const results = await searchDeployments(mockDataCollector, {
+        query: 'pl',
+      });
 
       expect(results).toHaveLength(1);
       expect(results[0].name).toBe('plex');
@@ -46,7 +50,11 @@ describe('search-deployments', () => {
 
     it('should respect default limit of 10', async () => {
       const releases = Array.from({ length: 20 }, (_, i) =>
-        createMockRelease({ name: `plex-${i}`, chart: `plex-${i}`, key: `key-${i}` })
+        createMockRelease({
+          name: `plex-${i}`,
+          chart: `plex-${i}`,
+          key: `key-${i}`,
+        }),
       );
 
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
@@ -55,14 +63,20 @@ describe('search-deployments', () => {
         values: {},
       });
 
-      const results = await searchDeployments(mockDataCollector, { query: 'plex' });
+      const results = await searchDeployments(mockDataCollector, {
+        query: 'plex',
+      });
 
       expect(results).toHaveLength(10);
     });
 
     it('should respect custom limit parameter', async () => {
       const releases = Array.from({ length: 20 }, (_, i) =>
-        createMockRelease({ name: `plex-${i}`, chart: `plex-${i}`, key: `key-${i}` })
+        createMockRelease({
+          name: `plex-${i}`,
+          chart: `plex-${i}`,
+          key: `key-${i}`,
+        }),
       );
 
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
@@ -71,14 +85,21 @@ describe('search-deployments', () => {
         values: {},
       });
 
-      const results = await searchDeployments(mockDataCollector, { query: 'plex', limit: 5 });
+      const results = await searchDeployments(mockDataCollector, {
+        query: 'plex',
+        limit: 5,
+      });
 
       expect(results).toHaveLength(5);
     });
 
     it('should enforce max limit of 100', async () => {
       const releases = Array.from({ length: 150 }, (_, i) =>
-        createMockRelease({ name: `plex-${i}`, chart: `plex-${i}`, key: `key-${i}` })
+        createMockRelease({
+          name: `plex-${i}`,
+          chart: `plex-${i}`,
+          key: `key-${i}`,
+        }),
       );
 
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
@@ -87,7 +108,10 @@ describe('search-deployments', () => {
         values: {},
       });
 
-      const results = await searchDeployments(mockDataCollector, { query: 'plex', limit: 200 });
+      const results = await searchDeployments(mockDataCollector, {
+        query: 'plex',
+        limit: 200,
+      });
 
       expect(results).toHaveLength(100);
     });
@@ -105,7 +129,9 @@ describe('search-deployments', () => {
         values: {},
       });
 
-      const results = await searchDeployments(mockDataCollector, { query: 'plex' });
+      const results = await searchDeployments(mockDataCollector, {
+        query: 'plex',
+      });
 
       expect(results[0].name).toBe('plex'); // Exact match + highest stars
       expect(results[0].score).toBeGreaterThan(results[1].score);
@@ -113,7 +139,11 @@ describe('search-deployments', () => {
 
     it('should apply author weights correctly', async () => {
       const releases = [
-        createMockRelease({ name: 'plex', repo: 'preferred-author/cluster', stars: 100 }),
+        createMockRelease({
+          name: 'plex',
+          repo: 'preferred-author/cluster',
+          stars: 100,
+        }),
         createMockRelease({ name: 'plex', repo: 'user/repo', stars: 150 }),
       ];
 
@@ -137,7 +167,9 @@ describe('search-deployments', () => {
         values: {},
       });
 
-      const results = await searchDeployments(mockDataCollector, { query: 'nonexistent' });
+      const results = await searchDeployments(mockDataCollector, {
+        query: 'nonexistent',
+      });
 
       expect(results).toEqual([]);
     });
@@ -149,7 +181,9 @@ describe('search-deployments', () => {
         values: {},
       });
 
-      const results = await searchDeployments(mockDataCollector, { query: 'plex' });
+      const results = await searchDeployments(mockDataCollector, {
+        query: 'plex',
+      });
 
       expect(results[0].score).toBe(Math.round(results[0].score * 10) / 10);
     });
@@ -161,7 +195,9 @@ describe('search-deployments', () => {
         values: {},
       });
 
-      const results = await searchDeployments(mockDataCollector, { query: 'plex' });
+      const results = await searchDeployments(mockDataCollector, {
+        query: 'plex',
+      });
 
       expect(results[0]).toHaveProperty('name');
       expect(results[0]).toHaveProperty('chart');
@@ -182,7 +218,9 @@ describe('search-deployments', () => {
         values: {},
       });
 
-      const results = await searchDeployments(mockDataCollector, { query: 'PLEX' });
+      const results = await searchDeployments(mockDataCollector, {
+        query: 'PLEX',
+      });
 
       expect(results).toHaveLength(1);
       expect(results[0].name).toBe('plex');

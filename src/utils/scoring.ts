@@ -36,7 +36,7 @@ function detectAuthor(repo: string, authorWeights: Record<string, number>): stri
 export function calculateScore(
   release: ReleaseInfo,
   query: string,
-  authorWeights: Record<string, number> = {}
+  authorWeights: Record<string, number> = {},
 ): number {
   const normalizedQuery = query.toLowerCase();
   const normalizedName = release.name.toLowerCase();

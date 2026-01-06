@@ -63,7 +63,10 @@ describe('get-chart-details', () => {
     });
 
     await expect(
-      getChartDetails(mockDataCollector, { key: 'invalid', includeValues: false })
+      getChartDetails(mockDataCollector, {
+        key: 'invalid',
+        includeValues: false,
+      }),
     ).rejects.toThrow();
   });
 });

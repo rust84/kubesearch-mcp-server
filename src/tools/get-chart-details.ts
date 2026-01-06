@@ -22,9 +22,31 @@ function flattenValueTree(
   repo: string,
   repoUrl: string,
   stars: number,
-  prefix: string = ''
-): Map<string, { values: Array<{ value: unknown; repo: string; repoUrl: string; stars: number }>; types: Set<string> }> {
-  const result = new Map<string, { values: Array<{ value: unknown; repo: string; repoUrl: string; stars: number }>; types: Set<string> }>();
+  prefix: string = '',
+): Map<
+  string,
+  {
+    values: Array<{
+      value: unknown;
+      repo: string;
+      repoUrl: string;
+      stars: number;
+    }>;
+    types: Set<string>;
+  }
+> {
+  const result = new Map<
+    string,
+    {
+      values: Array<{
+        value: unknown;
+        repo: string;
+        repoUrl: string;
+        stars: number;
+      }>;
+      types: Set<string>;
+    }
+  >();
 
   // Guard against null/undefined values
   if (!tree || typeof tree !== 'object') {
@@ -68,7 +90,6 @@ function flattenValueTree(
   return result;
 }
 
-
 /**
  * Detect author from repository owner
  */
@@ -87,7 +108,11 @@ function detectAuthor(repo: string, authorWeights: Record<string, number>): stri
 /**
  * Calculate sort score for a repository (author boost + stars)
  */
-function calculateRepoScore(repo: string, stars: number, authorWeights: Record<string, number>): number {
+function calculateRepoScore(
+  repo: string,
+  stars: number,
+  authorWeights: Record<string, number>,
+): number {
   const author = detectAuthor(repo, authorWeights);
   const authorMultiplier = author && authorWeights[author] ? authorWeights[author] : 1.0;
   return stars * authorMultiplier;
@@ -96,14 +121,14 @@ function calculateRepoScore(repo: string, stars: number, authorWeights: Record<s
 export async function getChartDetails(
   dataCollector: DataCollector,
   input: GetChartDetailsInput,
-  authorWeights: Record<string, number> = {}
+  authorWeights: Record<string, number> = {},
 ): Promise<ChartDetailsResult> {
   const {
     key,
     includeValues = true,
     valuesLimit: rawValuesLimit = 5,
     pathsLimit: rawPathsLimit = 10,
-    valuePath
+    valuePath,
   } = input;
 
   // Enforce upper bounds
@@ -114,7 +139,7 @@ export async function getChartDetails(
   const collectorData = await dataCollector.collectReleases();
 
   // Find releases matching the key
-  const matchingRelease = collectorData.releases.find(r => r.key === key);
+  const matchingRelease = collectorData.releases.find((r) => r.key === key);
 
   if (!matchingRelease) {
     throw new Error(`Chart with key '${key}' not found`);
@@ -130,9 +155,7 @@ export async function getChartDetails(
   const totalRepos = repos.length;
 
   // Find latest version (semantic versioning aware)
-  const versions = repos
-    .map(r => r.chart_version)
-    .filter(v => v && v.trim() !== '');
+  const versions = repos.map((r) => r.chart_version).filter((v) => v && v.trim() !== '');
 
   const latestVersion = versions.length > 0 ? versions[0] : 'unknown';
 
@@ -145,7 +168,18 @@ export async function getChartDetails(
   let popularValues: ChartDetailsResult['popularValues'] = undefined;
 
   if (includeValues) {
-    const allValuePaths = new Map<string, { values: Array<{ value: unknown; repo: string; repoUrl: string; stars: number }>; types: Set<string> }>();
+    const allValuePaths = new Map<
+      string,
+      {
+        values: Array<{
+          value: unknown;
+          repo: string;
+          repoUrl: string;
+          stars: number;
+        }>;
+        types: Set<string>;
+      }
+    >();
 
     // Flatten all value trees with repo info
     for (const repo of repos) {
@@ -176,7 +210,7 @@ export async function getChartDetails(
     if (valuePath) {
       const normalizedPath = valuePath.toLowerCase();
       filteredPaths = filteredPaths.filter(([path]) =>
-        path.toLowerCase().startsWith(normalizedPath)
+        path.toLowerCase().startsWith(normalizedPath),
       );
     }
 
@@ -185,7 +219,7 @@ export async function getChartDetails(
       .map(([path, data]) => {
         // Sort values by repo score (author weight + stars)
         const sortedValues = data.values
-          .map(v => ({
+          .map((v) => ({
             value: v.value,
             repo: v.repo,
             repoUrl: v.repoUrl,
@@ -221,13 +255,15 @@ export async function getChartDetails(
 
 export const getChartDetailsSchema = {
   name: 'get_chart_details',
-  description: 'Get detailed information about a specific Helm chart including popular configuration values with all variations sorted by repository quality (stars + author reputation). Optionally filter to specific configuration paths (e.g., "persistence" to see only persistence-related settings). TIP: Use get_chart_index first to explore available configuration paths, then use valuePath to narrow down to specific sections. Requires a chart key - use list_chart_sources or search_deployments first to find the key.',
+  description:
+    'Get detailed information about a specific Helm chart including popular configuration values with all variations sorted by repository quality (stars + author reputation). Optionally filter to specific configuration paths (e.g., "persistence" to see only persistence-related settings). TIP: Use get_chart_index first to explore available configuration paths, then use valuePath to narrow down to specific sections. Requires a chart key - use list_chart_sources or search_deployments first to find the key.',
   inputSchema: {
     type: 'object',
     properties: {
       key: {
         type: 'string',
-        description: 'Chart key from list_chart_sources or search_deployments (e.g., "ghcr.io-bjw-s-helm-plex")',
+        description:
+          'Chart key from list_chart_sources or search_deployments (e.g., "ghcr.io-bjw-s-helm-plex")',
       },
       includeValues: {
         type: 'boolean',
@@ -236,7 +272,8 @@ export const getChartDetailsSchema = {
       },
       valuesLimit: {
         type: 'number',
-        description: 'Maximum number of value variations to return per configuration path (default: 5, max: 10)',
+        description:
+          'Maximum number of value variations to return per configuration path (default: 5, max: 10)',
         default: 5,
       },
       pathsLimit: {
@@ -246,7 +283,8 @@ export const getChartDetailsSchema = {
       },
       valuePath: {
         type: 'string',
-        description: 'Optional path prefix to filter results (e.g., "persistence" returns only persistence.config, persistence.cache, persistence.tmp, etc.). Case-insensitive prefix matching. Use get_chart_index first to discover available paths.',
+        description:
+          'Optional path prefix to filter results (e.g., "persistence" returns only persistence.config, persistence.cache, persistence.tmp, etc.). Case-insensitive prefix matching. Use get_chart_index first to discover available paths.',
       },
     },
     required: ['key'],

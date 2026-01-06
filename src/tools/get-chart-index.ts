@@ -14,10 +14,7 @@ export interface GetChartIndexInput {
 /**
  * Walk a value tree and collect all paths
  */
-function collectPaths(
-  tree: ValueTree,
-  prefix: string = ''
-): Set<string> {
+function collectPaths(tree: ValueTree, prefix: string = ''): Set<string> {
   const paths = new Set<string>();
 
   // Guard against null/undefined values
@@ -45,7 +42,7 @@ function collectPaths(
 
 export async function getChartIndex(
   dataCollector: DataCollector,
-  input: GetChartIndexInput
+  input: GetChartIndexInput,
 ): Promise<ChartIndexResult> {
   const { key, searchPath } = input;
 
@@ -53,7 +50,7 @@ export async function getChartIndex(
   const collectorData = await dataCollector.collectReleases();
 
   // Find releases matching the key
-  const matchingRelease = collectorData.releases.find(r => r.key === key);
+  const matchingRelease = collectorData.releases.find((r) => r.key === key);
 
   if (!matchingRelease) {
     throw new Error(`Chart with key '${key}' not found`);
@@ -84,7 +81,7 @@ export async function getChartIndex(
   if (searchPath) {
     const normalizedSearch = searchPath.toLowerCase();
     filteredPaths = filteredPaths.filter(([path]) =>
-      path.toLowerCase().startsWith(normalizedSearch)
+      path.toLowerCase().startsWith(normalizedSearch),
     );
   }
 
@@ -107,17 +104,20 @@ export async function getChartIndex(
 
 export const getChartIndexSchema = {
   name: 'get_chart_index',
-  description: 'List all configuration paths available in a chart to help explore what settings can be configured. Returns a flat list of all value paths found across real-world deployments. Use searchPath to filter to a specific section (e.g., "persistence" shows only persistence.config, persistence.cache, etc.). Requires a chart key - use list_chart_sources or search_deployments first to find the key.',
+  description:
+    'List all configuration paths available in a chart to help explore what settings can be configured. Returns a flat list of all value paths found across real-world deployments. Use searchPath to filter to a specific section (e.g., "persistence" shows only persistence.config, persistence.cache, etc.). Requires a chart key - use list_chart_sources or search_deployments first to find the key.',
   inputSchema: {
     type: 'object',
     properties: {
       key: {
         type: 'string',
-        description: 'Chart key from list_chart_sources or search_deployments (e.g., "ghcr.io-bjw-s-helm-plex")',
+        description:
+          'Chart key from list_chart_sources or search_deployments (e.g., "ghcr.io-bjw-s-helm-plex")',
       },
       searchPath: {
         type: 'string',
-        description: 'Optional path prefix to filter results (e.g., "persistence", "ingress", "service"). Case-insensitive prefix matching. Omit to see all top-level paths.',
+        description:
+          'Optional path prefix to filter results (e.g., "persistence", "ingress", "service"). Case-insensitive prefix matching. Omit to see all top-level paths.',
       },
     },
     required: ['key'],

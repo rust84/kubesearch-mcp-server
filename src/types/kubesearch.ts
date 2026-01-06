@@ -4,27 +4,27 @@
  */
 
 export interface ReleaseInfo {
-  release: string;        // Release name
-  chart: string;          // Chart name
-  name: string;           // Display name
-  key: string;            // Unique identifier
-  chartsUrl: string;      // Helm repo URL
-  repo: string;           // Repository owner/name (e.g., "onedr0p/cluster")
-  repoUrl: string;        // GitHub repository URL
-  stars: number;          // Individual repository stars
-  version: string;        // Chart version
-  deploymentUrl: string;  // URL to YAML file
-  icon?: string;          // Hajimari icon
-  timestamp: number;      // Deployment timestamp
+  release: string; // Release name
+  chart: string; // Chart name
+  name: string; // Display name
+  key: string; // Unique identifier
+  chartsUrl: string; // Helm repo URL
+  repo: string; // Repository owner/name (e.g., "onedr0p/cluster")
+  repoUrl: string; // GitHub repository URL
+  stars: number; // Individual repository stars
+  version: string; // Chart version
+  deploymentUrl: string; // URL to YAML file
+  icon?: string; // Hajimari icon
+  timestamp: number; // Deployment timestamp
 }
 
 export interface RepoInfo {
-  name: string;           // Release name
-  repo: string;           // GitHub repo (user/repo)
+  name: string; // Release name
+  repo: string; // GitHub repo (user/repo)
   helm_repo_name: string;
   helm_repo_url: string;
-  url: string;            // Link to YAML file
-  repo_url: string;       // GitHub URL
+  url: string; // Link to YAML file
+  repo_url: string; // GitHub URL
   chart_version: string;
   stars: number;
   icon: string;
@@ -50,8 +50,8 @@ export interface ValuesData {
 }
 
 export interface CollectorData {
-  releases: ReleaseInfo[];  // Individual deployments (no longer aggregated)
-  repos: Record<string, RepoInfo[]>;  // Kept for backward compatibility with get_chart_details
+  releases: ReleaseInfo[]; // Individual deployments (no longer aggregated)
+  repos: Record<string, RepoInfo[]>; // Kept for backward compatibility with get_chart_details
   values: Record<string, ValueTree>;
 }
 
@@ -73,7 +73,7 @@ export interface FluxHelmReleaseRow {
 
 export interface ValuesRow {
   url: string;
-  val: string;  // JSON string
+  val: string; // JSON string
 }
 
 // MCP Tool result types
@@ -81,11 +81,11 @@ export interface SearchChartResult {
   name: string;
   chart: string;
   helmRepoURL: string;
-  repo: string;           // Repository owner/name (e.g., "onedr0p/cluster")
-  repoUrl: string;        // GitHub repository URL
-  stars: number;          // Individual repository stars
-  version: string;        // Chart version
-  deploymentUrl: string;  // URL to YAML file
+  repo: string; // Repository owner/name (e.g., "onedr0p/cluster")
+  repoUrl: string; // GitHub repository URL
+  stars: number; // Individual repository stars
+  version: string; // Chart version
+  deploymentUrl: string; // URL to YAML file
   icon?: string;
   key: string;
   score: number;
@@ -181,15 +181,15 @@ export interface Config {
 export const MINIMUM_COUNT = 3;
 
 export const SEARCH_WEIGHTS = {
-  fullMatch: 100,  // Significantly increased to always prioritize exact matches
+  fullMatch: 100, // Significantly increased to always prioritize exact matches
   length: 1,
-  count: 5,     // No longer used (was deployment count per aggregated chart)
-  stars: 0.1,   // Weight for individual repository GitHub stars (0.1 = 10 stars = 1 point)
+  count: 5, // No longer used (was deployment count per aggregated chart)
+  stars: 0.1, // Weight for individual repository GitHub stars (0.1 = 10 stars = 1 point)
 };
 
 // Default author boost multipliers for preferred maintainers
 // Score is multiplied by these values for matching authors
 // Can be overridden via AUTHOR_WEIGHTS environment variable
 export const DEFAULT_AUTHOR_WEIGHTS: Record<string, number> = {
-  'bjw-s': 1.5,           // bjw-s repository deployments (50% boost)
+  'bjw-s': 1.5, // bjw-s repository deployments (50% boost)
 };

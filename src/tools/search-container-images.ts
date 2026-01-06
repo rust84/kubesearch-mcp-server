@@ -53,7 +53,7 @@ function extractImages(tree: ValueTree): Map<string, Set<string>> {
 
 export async function searchContainerImages(
   dataCollector: DataCollector,
-  input: SearchContainerImagesInput
+  input: SearchContainerImagesInput,
 ): Promise<ImageSearchResult[]> {
   const { image, limit = 20 } = input;
 
@@ -87,7 +87,7 @@ export async function searchContainerImages(
   // Filter repositories matching query
   const normalizedImage = image.toLowerCase();
   const matchingRepos = Array.from(imageMap.entries()).filter(([repository]) =>
-    repository.toLowerCase().includes(normalizedImage)
+    repository.toLowerCase().includes(normalizedImage),
   );
 
   // Sort by total usage (descending)
@@ -105,7 +105,7 @@ export async function searchContainerImages(
     const tags = Array.from(tagMap.entries()).map(([tag, urls]) => ({
       tag,
       usageCount: urls.length,
-      deployments: urls.slice(0, 5).map(url => {
+      deployments: urls.slice(0, 5).map((url) => {
         // Extract repo name from URL
         // Format: https://github.com/user/repo/...
         const match = url.match(/github\.com\/([^/]+\/[^/]+)/);
@@ -132,7 +132,8 @@ export async function searchContainerImages(
 
 export const searchContainerImagesSchema = {
   name: 'search_container_images',
-  description: 'Find Helm deployments using specific container images to see how images are configured in real deployments',
+  description:
+    'Find Helm deployments using specific container images to see how images are configured in real deployments',
   inputSchema: {
     type: 'object',
     properties: {

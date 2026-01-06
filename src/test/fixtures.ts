@@ -23,7 +23,8 @@ export const mockReleaseInfo: ReleaseInfo = {
   repoUrl: 'https://github.com/testuser/cluster',
   stars: 150,
   version: '1.0.0',
-  deploymentUrl: 'https://github.com/testuser/cluster/blob/main/kubernetes/apps/media/plex/app/helmrelease.yaml',
+  deploymentUrl:
+    'https://github.com/testuser/cluster/blob/main/kubernetes/apps/media/plex/app/helmrelease.yaml',
   icon: 'mdi:plex',
   timestamp: 1704067200,
 };
@@ -268,7 +269,10 @@ export function createMockFluxRow(overrides: Partial<FluxHelmReleaseRow>): FluxH
 /**
  * Create multiple mock releases for testing lists
  */
-export function createMockReleases(count: number, baseOverrides: Partial<ReleaseInfo> = {}): ReleaseInfo[] {
+export function createMockReleases(
+  count: number,
+  baseOverrides: Partial<ReleaseInfo> = {},
+): ReleaseInfo[] {
   return Array.from({ length: count }, (_, i) => ({
     ...mockReleaseInfo,
     ...baseOverrides,

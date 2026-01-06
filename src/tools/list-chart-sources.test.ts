@@ -14,9 +14,21 @@ describe('list-chart-sources', () => {
 
   it('should list unique chart sources with deployment counts', async () => {
     const releases = [
-      createMockRelease({ key: 'ghcr.io-bjw-s-helm-plex', chart: 'plex', name: 'plex' }),
-      createMockRelease({ key: 'ghcr.io-bjw-s-helm-plex', chart: 'plex', name: 'plex' }),
-      createMockRelease({ key: 'charts.bitnami.com-bitnami-nginx', chart: 'nginx', name: 'nginx' }),
+      createMockRelease({
+        key: 'ghcr.io-bjw-s-helm-plex',
+        chart: 'plex',
+        name: 'plex',
+      }),
+      createMockRelease({
+        key: 'ghcr.io-bjw-s-helm-plex',
+        chart: 'plex',
+        name: 'plex',
+      }),
+      createMockRelease({
+        key: 'charts.bitnami.com-bitnami-nginx',
+        chart: 'nginx',
+        name: 'nginx',
+      }),
     ];
 
     vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
@@ -28,7 +40,9 @@ describe('list-chart-sources', () => {
       values: {},
     });
 
-    const results = await listChartSources(mockDataCollector, { query: 'plex' });
+    const results = await listChartSources(mockDataCollector, {
+      query: 'plex',
+    });
 
     expect(results).toHaveLength(1);
     expect(results[0].key).toBe('ghcr.io-bjw-s-helm-plex');
@@ -75,7 +89,10 @@ describe('list-chart-sources', () => {
       values: {},
     });
 
-    const results = await listChartSources(mockDataCollector, { query: 'app', minCount: 3 });
+    const results = await listChartSources(mockDataCollector, {
+      query: 'app',
+      minCount: 3,
+    });
 
     expect(results).toHaveLength(1);
     expect(results[0].count).toBe(4);
@@ -88,7 +105,9 @@ describe('list-chart-sources', () => {
       values: {},
     });
 
-    const results = await listChartSources(mockDataCollector, { query: 'nonexistent' });
+    const results = await listChartSources(mockDataCollector, {
+      query: 'nonexistent',
+    });
 
     expect(results).toEqual([]);
   });

@@ -13,9 +13,7 @@ describe('get-chart-stats', () => {
   });
 
   it('should return statistics for valid key', async () => {
-    const releases = [
-      createMockRelease({ key: 'test-key', stars: 100, version: '1.0.0' }),
-    ];
+    const releases = [createMockRelease({ key: 'test-key', stars: 100, version: '1.0.0' })];
 
     vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
       releases,

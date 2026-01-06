@@ -7,10 +7,7 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
 import { DatabaseManager } from './services/database.js';
 import { DataCollector } from './services/data-collector.js';
@@ -31,16 +28,8 @@ import {
   searchContainerImagesSchema,
   SearchContainerImagesInput,
 } from './tools/search-container-images.js';
-import {
-  getChartIndex,
-  getChartIndexSchema,
-  GetChartIndexInput,
-} from './tools/get-chart-index.js';
-import {
-  getChartStats,
-  getChartStatsSchema,
-  GetChartStatsInput,
-} from './tools/get-chart-stats.js';
+import { getChartIndex, getChartIndexSchema, GetChartIndexInput } from './tools/get-chart-index.js';
+import { getChartStats, getChartStatsSchema, GetChartStatsInput } from './tools/get-chart-stats.js';
 import {
   listChartSources,
   listChartSourcesSchema,
@@ -99,7 +88,7 @@ const server = new Server(
     capabilities: {
       tools: {},
     },
-  }
+  },
 );
 
 // Register tool list handler

@@ -8,31 +8,31 @@ describe('DataCollector', () => {
   describe('mergeHelmURL', () => {
     it('should map helm-charts HTTP URL to OCI', () => {
       expect(mergeHelmURL('https://bjw-s.github.io/helm-charts/')).toBe(
-        'oci://ghcr.io/bjw-s/helm/'
+        'oci://ghcr.io/bjw-s/helm/',
       );
     });
 
     it('should map bitnami URL to OCI', () => {
       expect(mergeHelmURL('https://charts.bitnami.com/bitnami/')).toBe(
-        'oci://registry-1.docker.io/bitnamicharts/'
+        'oci://registry-1.docker.io/bitnamicharts/',
       );
     });
 
     it('should map prometheus URL to OCI', () => {
       expect(mergeHelmURL('https://prometheus-community.github.io/helm-charts/')).toBe(
-        'oci://ghcr.io/prometheus-community/charts/'
+        'oci://ghcr.io/prometheus-community/charts/',
       );
     });
 
     it('should map kyverno URL to OCI', () => {
       expect(mergeHelmURL('https://kyverno.github.io/kyverno/')).toBe(
-        'oci://ghcr.io/kyverno/charts/'
+        'oci://ghcr.io/kyverno/charts/',
       );
     });
 
     it('should map grafana URL to OCI', () => {
       expect(mergeHelmURL('https://grafana.github.io/helm-charts/')).toBe(
-        'oci://ghcr.io/grafana-operator/helm-charts/'
+        'oci://ghcr.io/grafana-operator/helm-charts/',
       );
     });
 
@@ -169,8 +169,14 @@ describe('DataCollector', () => {
   describe('DataCollector class', () => {
     let dataCollector: DataCollector;
     let mockDbManager: DatabaseManager;
-    let mockDb: { all: ReturnType<typeof vi.fn>; get: ReturnType<typeof vi.fn> };
-    let mockDbExtended: { all: ReturnType<typeof vi.fn>; get: ReturnType<typeof vi.fn> };
+    let mockDb: {
+      all: ReturnType<typeof vi.fn>;
+      get: ReturnType<typeof vi.fn>;
+    };
+    let mockDbExtended: {
+      all: ReturnType<typeof vi.fn>;
+      get: ReturnType<typeof vi.fn>;
+    };
 
     beforeEach(() => {
       mockDb = {
@@ -364,7 +370,7 @@ describe('DataCollector', () => {
         const result = await dataCollector.collectReleases();
 
         expect(result.values['https://github.com/user/repo/blob/main/app.yaml']).toEqual(
-          mockSimpleValueTree
+          mockSimpleValueTree,
         );
       });
 
@@ -490,9 +496,7 @@ describe('DataCollector', () => {
 
       it('should parse JSON correctly', async () => {
         const urls = ['https://github.com/user/repo/blob/main/app.yaml'];
-        const mockValuesRows: ValuesRow[] = [
-          { url: urls[0], val: JSON.stringify(mockValueTree) },
-        ];
+        const mockValuesRows: ValuesRow[] = [{ url: urls[0], val: JSON.stringify(mockValueTree) }];
 
         mockDbExtended.all.mockResolvedValueOnce(mockValuesRows);
 
@@ -514,7 +518,7 @@ describe('DataCollector', () => {
         expect(result[urls[0]]).toEqual({});
         expect(consoleSpy).toHaveBeenCalledWith(
           expect.stringContaining('Failed to parse values'),
-          expect.anything()
+          expect.anything(),
         );
 
         consoleSpy.mockRestore();
