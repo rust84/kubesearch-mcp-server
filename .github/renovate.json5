@@ -1,22 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended",
-    ":disableRateLimiting",
-    ":dependencyDashboard",
-    ":semanticCommits"
+    "github>home-operations/renovate-config"
   ],
   "timezone": "Europe/London",
-  "dependencyDashboardTitle": "Renovate Dashboard",
   "rebaseWhen": "conflicted",
   "packageRules": [
-    {
-      "description": "Auto merge GitHub Actions minor/patch",
-      "matchManagers": ["github-actions"],
-      "automerge": true,
-      "automergeType": "branch",
-      "matchUpdateTypes": ["minor", "patch"]
-    },
     {
       "description": "Group vitest packages",
       "groupName": "vitest",
