@@ -6,3 +6,7 @@ dist/
 
 #SQLite database files
 *.db
+
+# Test coverage
+coverage/
+.vitest/

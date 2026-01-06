@@ -599,6 +599,34 @@ npm run watch
 npm run dev
 ```
 
+### Testing
+
+The project uses [Vitest](https://vitest.dev/) for unit and integration testing.
+
+**Run tests:**
+```bash
+# Run tests once
+npm test
+
+# Run tests in watch mode (re-runs on file changes)
+npm run test:watch
+
+# Generate coverage report
+npm run test:coverage
+
+# Open interactive test UI in browser
+npm run test:ui
+```
+
+**Testing approach:**
+- **Unit tests** - Pure functions, utilities, services (with mocked dependencies)
+- **Integration tests** - MCP tools with mocked data collectors
+- **Mocking** - Database interactions mocked to avoid external dependencies
+- **Fixtures** - Reusable test data in `src/test/fixtures.ts`
+
+**CI/CD:**
+Tests run automatically on every push and pull request via GitHub Actions. Coverage reports are generated and enforced (80% minimum threshold).
+
 ### Project Structure
 
 ```

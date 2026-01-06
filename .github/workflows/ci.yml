@@ -60,6 +60,9 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Generate coverage report
+        run: npm run test:coverage
+
   security-scan:
     name: Security Scanning
     runs-on: ubuntu-latest
