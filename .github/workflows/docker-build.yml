@@ -125,7 +125,7 @@ jobs:
 
       - name: Run Grype security scan
         if: steps.build.outputs.digest != ''
-        uses: anchore/scan-action@v5
+        uses: anchore/scan-action@v7
         id: grype-scan
         with:
           image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
