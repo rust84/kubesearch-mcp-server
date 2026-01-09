@@ -844,3 +844,5 @@ Pre-release tags (with `-beta`, `-alpha`, etc.) create GitHub pre-releases that 
 
 - Data from [k8s-at-home-search](https://kubesearch.dev) by [@whazor](https://github.com/whazor)
 - Indexes real-world Kubernetes configurations from the k8s-at-home community
+
+## DELETEME
