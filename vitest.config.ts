@@ -23,7 +23,7 @@ export default defineConfig({
         'src/**/*.test.ts',
         'src/**/*.spec.ts',
         'src/types/**',
-        'src/index.ts', // Main entry point - integration tested separately
+        'src/index.ts', // Thin entry point (side effects only); dispatch logic is tested via tool-handler.test.ts
       ],
       thresholds: {
         lines: 80,
