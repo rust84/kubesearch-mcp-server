@@ -33,17 +33,20 @@ describe('DatabaseManager', () => {
   const mockDbExtended = { close: mockClose } as unknown as Database;
   const mockOpen = vi.mocked(open);
 
-  // Suppress console.log during tests
+  // Suppress console.log/console.error during tests
   const originalConsoleLog = console.log;
+  const originalConsoleError = console.error;
 
   beforeEach(() => {
     vi.clearAllMocks();
     console.log = vi.fn();
+    console.error = vi.fn();
     dbManager = new DatabaseManager(mockConfig);
   });
 
   afterEach(() => {
     console.log = originalConsoleLog;
+    console.error = originalConsoleError;
   });
 
   describe('constructor', () => {
@@ -74,7 +77,7 @@ describe('DatabaseManager', () => {
           filename: mockConfig.DB_EXTENDED_PATH,
         }),
       );
-      expect(console.log).toHaveBeenCalledWith('Database connections established');
+      expect(console.error).toHaveBeenCalledWith('Database connections established');
     });
 
     it('should open databases with OPEN_READONLY mode', async () => {
@@ -126,7 +129,7 @@ describe('DatabaseManager', () => {
       await dbManager.close();
 
       expect(mockClose).toHaveBeenCalledTimes(2);
-      expect(console.log).toHaveBeenCalledWith('Database connections closed');
+      expect(console.error).toHaveBeenCalledWith('Database connections closed');
     });
 
     it('should set isConnected to false after closing', async () => {
@@ -296,6 +299,19 @@ describe('DatabaseManager', () => {
           filename: '/custom/path/extended.db',
         }),
       );
+    });
+  });
+
+  describe('stdout safety', () => {
+    it('never writes to stdout (MCP stdio protocol safety)', async () => {
+      const logSpy = vi.spyOn(console, 'log');
+      mockOpen.mockResolvedValueOnce(mockDb).mockResolvedValueOnce(mockDbExtended);
+      mockClose.mockResolvedValue(undefined);
+
+      await dbManager.open();
+      await dbManager.close();
+
+      expect(logSpy).not.toHaveBeenCalled();
     });
   });
 });

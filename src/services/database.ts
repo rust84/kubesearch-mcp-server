@@ -34,7 +34,7 @@ export class DatabaseManager {
         mode: sqlite3.OPEN_READONLY,
       });
 
-      console.log('Database connections established');
+      console.error('Database connections established');
     } catch (error) {
       throw new Error(`Failed to open databases: ${error}`);
     }
@@ -52,7 +52,7 @@ export class DatabaseManager {
       await this.dbExtended.close();
       this.dbExtended = null;
     }
-    console.log('Database connections closed');
+    console.error('Database connections closed');
   }
 
   /**
