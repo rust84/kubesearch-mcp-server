@@ -10,3 +10,6 @@ dist/
 # Test coverage
 coverage/
 .vitest/
+
+# Local MCP client config (contains credentials)
+.mcp.json
