@@ -31,11 +31,29 @@ function extractImages(tree: ValueTree): Map<string, Set<string>> {
           typeof value === 'string' &&
           (value.includes('/') || value.includes(':'))
         ) {
-          // Extract repository (without tag)
-          const parts = value.split(':');
-          const repository = parts[0];
+          // Extract repository (without tag), being careful to distinguish
+          // a tag separator (`:`) from a registry port (`registry:port/...`)
+          // and a digest reference (`repo@sha256:...`).
+          let repository: string;
+          let tag: string;
 
-          const tag = parts.length > 1 ? parts[1] : 'latest';
+          const atIndex = value.indexOf('@');
+          if (atIndex !== -1) {
+            repository = value.slice(0, atIndex);
+            tag = value.slice(atIndex + 1);
+          } else {
+            const colonIndex = value.lastIndexOf(':');
+            if (colonIndex === -1 || value.slice(colonIndex + 1).includes('/')) {
+              // No tag separator, or the last `:` is followed by a `/`
+              // (e.g. "registry.example.com:5000/img"), meaning the colon
+              // is part of a registry:port, not a tag separator.
+              repository = value;
+              tag = 'latest';
+            } else {
+              repository = value.slice(0, colonIndex);
+              tag = value.slice(colonIndex + 1);
+            }
+          }
 
           if (!images.has(repository)) {
             images.set(repository, new Set());

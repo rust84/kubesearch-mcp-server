@@ -59,4 +59,39 @@ describe('search-container-images', () => {
 
     expect(results.length).toBeGreaterThanOrEqual(0);
   });
+
+  describe('image reference parsing', () => {
+    async function parseSingleImage(repository: string) {
+      vi.mocked(mockDataCollector.collectAllValues).mockResolvedValue({
+        [mockRepoInfo.url]: { image: { repository } },
+      });
+
+      const results = await searchContainerImages(mockDataCollector, {
+        image: '',
+      });
+
+      expect(results).toHaveLength(1);
+      return { repository: results[0].repository, tag: results[0].tags[0].tag };
+    }
+
+    it('splits a plain repository:tag reference', async () => {
+      const parsed = await parseSingleImage('ghcr.io/linuxserver/plex:1.2');
+      expect(parsed).toEqual({ repository: 'ghcr.io/linuxserver/plex', tag: '1.2' });
+    });
+
+    it('does not mistake a registry port for a tag separator', async () => {
+      const parsed = await parseSingleImage('registry.example.com:5000/img:v1');
+      expect(parsed).toEqual({ repository: 'registry.example.com:5000/img', tag: 'v1' });
+    });
+
+    it('defaults to "latest" when a registry:port reference has no tag', async () => {
+      const parsed = await parseSingleImage('registry.example.com:5000/img');
+      expect(parsed).toEqual({ repository: 'registry.example.com:5000/img', tag: 'latest' });
+    });
+
+    it('splits a digest reference on "@" instead of ":"', async () => {
+      const parsed = await parseSingleImage('nginx@sha256:abcd');
+      expect(parsed).toEqual({ repository: 'nginx', tag: 'sha256:abcd' });
+    });
+  });
 });
