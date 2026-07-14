@@ -4,13 +4,16 @@
  * Helps users compare different sources (official, mirrors, community) for the same chart
  */
 
+import { z } from 'zod';
+
 import { DataCollector } from '../services/data-collector.js';
 import { matchesQuery } from '../utils/scoring.js';
+import { listChartSourcesInput } from '../tool-inputs.js';
 
-export interface ListChartSourcesInput {
-  query: string;
-  minCount?: number;
-}
+// z.input (not z.infer/z.output) so `minCount` stays optional here, matching
+// the pre-parse shape: existing unit tests call this function directly
+// (bypassing zod parsing) and rely on the destructuring default below.
+export type ListChartSourcesInput = z.input<typeof listChartSourcesInput>;
 
 export interface ChartSourceEntry {
   name: string;

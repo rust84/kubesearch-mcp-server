@@ -4,24 +4,24 @@
  * Returns individual deployments showing how real users configure and deploy charts
  */
 
+import { z } from 'zod';
+
 import { DataCollector } from '../services/data-collector.js';
 import { SearchChartResult } from '../types/kubesearch.js';
 import { calculateScore, matchesQuery } from '../utils/scoring.js';
+import { searchDeploymentsInput } from '../tool-inputs.js';
 
-export interface SearchDeploymentsInput {
-  query: string;
-  limit?: number;
-}
+// z.input (not z.infer/z.output) so `limit` stays optional here, matching the
+// pre-parse shape: existing unit tests call this function directly (bypassing
+// zod parsing) and rely on the destructuring default below.
+export type SearchDeploymentsInput = z.input<typeof searchDeploymentsInput>;
 
 export async function searchDeployments(
   dataCollector: DataCollector,
   input: SearchDeploymentsInput,
   authorWeights: Record<string, number> = {},
 ): Promise<SearchChartResult[]> {
-  const { query, limit: rawLimit = 10 } = input;
-
-  // Enforce upper bound
-  const limit = Math.min(rawLimit, 100);
+  const { query, limit = 10 } = input;
 
   // Collect all releases from database
   const collectorData = await dataCollector.collectReleases();

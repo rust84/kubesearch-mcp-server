@@ -3,13 +3,16 @@
  * Find repositories using specific container images
  */
 
+import { z } from 'zod';
+
 import { DataCollector } from '../services/data-collector.js';
 import { ImageSearchResult, ValueTree } from '../types/kubesearch.js';
+import { searchContainerImagesInput } from '../tool-inputs.js';
 
-export interface SearchContainerImagesInput {
-  image: string;
-  limit?: number;
-}
+// z.input (not z.infer/z.output) so `limit` stays optional here, matching the
+// pre-parse shape: existing unit tests call this function directly (bypassing
+// zod parsing) and rely on the destructuring default below.
+export type SearchContainerImagesInput = z.input<typeof searchContainerImagesInput>;
 
 /**
  * Extract container images from a value tree

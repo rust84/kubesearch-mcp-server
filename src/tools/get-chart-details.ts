@@ -3,16 +3,16 @@
  * Get detailed information about a specific helm chart
  */
 
+import { z } from 'zod';
+
 import { DataCollector } from '../services/data-collector.js';
 import { ChartDetailsResult, ValueTree } from '../types/kubesearch.js';
+import { getChartDetailsInput } from '../tool-inputs.js';
 
-export interface GetChartDetailsInput {
-  key: string;
-  includeValues?: boolean;
-  valuesLimit?: number;
-  pathsLimit?: number;
-  valuePath?: string;
-}
+// z.input (not z.infer/z.output) so the defaulted fields stay optional here,
+// matching the pre-parse shape: existing unit tests call this function
+// directly (bypassing zod parsing) and rely on the destructuring defaults below.
+export type GetChartDetailsInput = z.input<typeof getChartDetailsInput>;
 
 /**
  * Walk a value tree and flatten to paths with values and repo info
@@ -123,17 +123,7 @@ export async function getChartDetails(
   input: GetChartDetailsInput,
   authorWeights: Record<string, number> = {},
 ): Promise<ChartDetailsResult> {
-  const {
-    key,
-    includeValues = true,
-    valuesLimit: rawValuesLimit = 5,
-    pathsLimit: rawPathsLimit = 15,
-    valuePath,
-  } = input;
-
-  // Enforce upper bounds
-  const valuesLimit = Math.min(rawValuesLimit, 10);
-  const pathsLimit = Math.min(rawPathsLimit, 50);
+  const { key, includeValues = true, valuesLimit = 5, pathsLimit = 15, valuePath } = input;
 
   // Collect all releases
   const collectorData = await dataCollector.collectReleases();

@@ -8,6 +8,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { z } from 'zod';
 
 import { DatabaseManager } from './services/database.js';
 import { DataCollector } from './services/data-collector.js';
@@ -27,8 +28,9 @@ function parseAuthorWeights(): Record<string, number> {
 
   try {
     const parsed = JSON.parse(authorWeightsEnv);
-    console.error('Loaded custom author weights:', parsed);
-    return parsed;
+    const validated = z.record(z.string(), z.number().finite().positive()).parse(parsed);
+    console.error('Loaded custom author weights:', validated);
+    return validated;
   } catch (error) {
     console.error('Warning: Failed to parse AUTHOR_WEIGHTS, using defaults:', error);
     return DEFAULT_AUTHOR_WEIGHTS;

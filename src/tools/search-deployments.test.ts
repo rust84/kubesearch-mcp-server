@@ -89,7 +89,7 @@ describe('search-deployments', () => {
       expect(results).toHaveLength(5);
     });
 
-    it('should enforce max limit of 100', async () => {
+    it('respects an explicit in-range limit at the tool level (upper-bound clamping now lives in tool-inputs/tool-handler validation)', async () => {
       const releases = Array.from({ length: 150 }, (_, i) =>
         createMockRelease({
           name: `plex-${i}`,
@@ -105,7 +105,7 @@ describe('search-deployments', () => {
 
       const results = await searchDeployments(mockDataCollector, {
         query: 'plex',
-        limit: 200,
+        limit: 100,
       });
 
       expect(results).toHaveLength(100);

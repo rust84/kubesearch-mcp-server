@@ -3,13 +3,13 @@
  * List all configuration paths available in a chart's deployments
  */
 
+import { z } from 'zod';
+
 import { DataCollector } from '../services/data-collector.js';
 import { ValueTree, ChartIndexResult } from '../types/kubesearch.js';
+import { getChartIndexInput } from '../tool-inputs.js';
 
-export interface GetChartIndexInput {
-  key: string;
-  searchPath?: string;
-}
+export type GetChartIndexInput = z.infer<typeof getChartIndexInput>;
 
 /**
  * Walk a value tree and collect all paths

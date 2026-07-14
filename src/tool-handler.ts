@@ -3,30 +3,27 @@
  * implementation and formats the response envelope.
  */
 
+import { ZodError } from 'zod';
+
 import { DataCollector } from './services/data-collector.js';
 
-import {
-  searchDeployments,
-  searchDeploymentsSchema,
-  SearchDeploymentsInput,
-} from './tools/search-deployments.js';
-import {
-  getChartDetails,
-  getChartDetailsSchema,
-  GetChartDetailsInput,
-} from './tools/get-chart-details.js';
+import { searchDeployments, searchDeploymentsSchema } from './tools/search-deployments.js';
+import { getChartDetails, getChartDetailsSchema } from './tools/get-chart-details.js';
 import {
   searchContainerImages,
   searchContainerImagesSchema,
-  SearchContainerImagesInput,
 } from './tools/search-container-images.js';
-import { getChartIndex, getChartIndexSchema, GetChartIndexInput } from './tools/get-chart-index.js';
-import { getChartStats, getChartStatsSchema, GetChartStatsInput } from './tools/get-chart-stats.js';
+import { getChartIndex, getChartIndexSchema } from './tools/get-chart-index.js';
+import { getChartStats, getChartStatsSchema } from './tools/get-chart-stats.js';
+import { listChartSources, listChartSourcesSchema } from './tools/list-chart-sources.js';
 import {
-  listChartSources,
-  listChartSourcesSchema,
-  ListChartSourcesInput,
-} from './tools/list-chart-sources.js';
+  searchDeploymentsInput,
+  getChartDetailsInput,
+  getChartIndexInput,
+  getChartStatsInput,
+  listChartSourcesInput,
+  searchContainerImagesInput,
+} from './tool-inputs.js';
 
 export const toolSchemas = [
   searchDeploymentsSchema,
@@ -46,7 +43,7 @@ export async function handleToolCall(
   try {
     switch (name) {
       case 'search_deployments': {
-        const input = args as unknown as SearchDeploymentsInput;
+        const input = searchDeploymentsInput.parse(args);
         const results = await searchDeployments(dataCollector, input, authorWeights);
         return {
           content: [
@@ -59,7 +56,7 @@ export async function handleToolCall(
       }
 
       case 'get_chart_details': {
-        const input = args as unknown as GetChartDetailsInput;
+        const input = getChartDetailsInput.parse(args);
         const results = await getChartDetails(dataCollector, input, authorWeights);
         return {
           content: [
@@ -72,7 +69,7 @@ export async function handleToolCall(
       }
 
       case 'get_chart_index': {
-        const input = args as unknown as GetChartIndexInput;
+        const input = getChartIndexInput.parse(args);
         const results = await getChartIndex(dataCollector, input);
         return {
           content: [
@@ -85,7 +82,7 @@ export async function handleToolCall(
       }
 
       case 'get_chart_stats': {
-        const input = args as unknown as GetChartStatsInput;
+        const input = getChartStatsInput.parse(args);
         const results = await getChartStats(dataCollector, input);
         return {
           content: [
@@ -98,7 +95,7 @@ export async function handleToolCall(
       }
 
       case 'list_chart_sources': {
-        const input = args as unknown as ListChartSourcesInput;
+        const input = listChartSourcesInput.parse(args);
         const results = await listChartSources(dataCollector, input);
         return {
           content: [
@@ -111,7 +108,7 @@ export async function handleToolCall(
       }
 
       case 'search_container_images': {
-        const input = args as unknown as SearchContainerImagesInput;
+        const input = searchContainerImagesInput.parse(args);
         const results = await searchContainerImages(dataCollector, input);
         return {
           content: [
@@ -127,6 +124,21 @@ export async function handleToolCall(
         throw new Error(`Unknown tool: ${name}`);
     }
   } catch (error) {
+    if (error instanceof ZodError) {
+      const flattened = error.issues
+        .map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
+        .join('; ');
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error: Invalid arguments for ${name}: ${flattened}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+
     const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       content: [

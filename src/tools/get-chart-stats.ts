@@ -3,12 +3,13 @@
  * Get statistics and metrics about a specific helm chart
  */
 
+import { z } from 'zod';
+
 import { DataCollector } from '../services/data-collector.js';
 import { ChartStatsResult } from '../types/kubesearch.js';
+import { getChartStatsInput } from '../tool-inputs.js';
 
-export interface GetChartStatsInput {
-  key: string;
-}
+export type GetChartStatsInput = z.infer<typeof getChartStatsInput>;
 
 export async function getChartStats(
   dataCollector: DataCollector,
