@@ -57,7 +57,7 @@ export async function getChartStats(
   const latestVersion = versionDistribution.length > 0 ? versionDistribution[0].version : 'unknown';
 
   // Get top repositories by stars
-  const topRepositories = repos
+  const topRepositories = [...repos]
     .sort((a, b) => b.stars - a.stars)
     .slice(0, 10)
     .map((r) => ({
