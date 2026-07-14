@@ -129,7 +129,7 @@ Works on:
 
 ## Prerequisites
 
-1. **Node.js 18+** installed on your system
+1. **Node.js 24+** installed on your system
 2. **k8s-at-home-search databases** - You need local access to:
    - `repos.db` - Main database with release and repository metadata
    - `repos-extended.db` - Extended database with Helm values
@@ -434,7 +434,7 @@ Get detailed information about a specific Helm chart including repositories usin
 - Popular Helm values with all variations sorted by repository quality
 - Statistics (total repos, avg stars, latest version)
 
-### 3. `get_chart_index`
+### 4. `get_chart_index`
 
 Explore what configuration paths are available in a chart by listing all paths found across real-world deployments. This helps discover what settings can be configured before diving into the actual values.
 
@@ -664,17 +664,24 @@ Tests run automatically on every push and pull request via GitHub Actions. Cover
 kubesearch-mcp-server/
 ├── src/
 │   ├── index.ts                    # MCP server entry point
+│   ├── tool-handler.ts             # Tool registration and dispatch
+│   ├── tool-inputs.ts              # Shared input schema helpers
 │   ├── types/
 │   │   └── kubesearch.ts          # Type definitions
 │   ├── services/
 │   │   ├── database.ts            # SQLite connection manager
 │   │   └── data-collector.ts     # SQL queries and data aggregation
 │   ├── tools/
-│   │   ├── search-helm-charts.ts
+│   │   ├── search-deployments.ts
+│   │   ├── list-chart-sources.ts
 │   │   ├── get-chart-details.ts
+│   │   ├── get-chart-index.ts
+│   │   ├── get-chart-stats.ts
 │   │   └── search-container-images.ts
-│   └── utils/
-│       └── scoring.ts             # Search scoring algorithm
+│   ├── utils/
+│   │   ├── scoring.ts              # Search scoring algorithm
+│   │   └── semver.ts               # Semantic version parsing/comparison
+│   └── test/                       # Shared fixtures and integration-test helpers
 ├── dist/                          # Compiled JavaScript (generated)
 ├── package.json
 └── tsconfig.json
@@ -841,5 +848,3 @@ Pre-release tags (with `-beta`, `-alpha`, etc.) create GitHub pre-releases that 
 
 - Data from [k8s-at-home-search](https://kubesearch.dev) by [@whazor](https://github.com/whazor)
 - Indexes real-world Kubernetes configurations from the k8s-at-home community
-
-## DELETEME
