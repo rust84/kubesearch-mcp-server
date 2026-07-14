@@ -7,6 +7,10 @@
 
 import { createRequire } from 'module';
 
+// Deliberately using the low-level Server class (deprecated in favor of
+// McpServer for the high-level API): tool dispatch lives in tool-handler.ts
+// and migrating to McpServer's per-tool registration is tracked as separate
+// future work in plans/README.md. Do not "fix" this import in passing.
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
