@@ -5,6 +5,8 @@
  * Provides tools to query k8s-at-home-search helm deployment examples
  */
 
+import { createRequire } from 'module';
+
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
@@ -14,6 +16,9 @@ import { DatabaseManager } from './services/database.js';
 import { DataCollector } from './services/data-collector.js';
 import { Config, DEFAULT_AUTHOR_WEIGHTS } from './types/kubesearch.js';
 import { toolSchemas, handleToolCall } from './tool-handler.js';
+
+const require = createRequire(import.meta.url);
+const { version } = require('../package.json') as { version: string };
 
 /**
  * Parse author weights from environment variable
@@ -62,7 +67,7 @@ const dataCollector = new DataCollector(dbManager);
 const server = new Server(
   {
     name: 'kubesearch-mcp-server',
-    version: '1.0.0',
+    version,
   },
   {
     capabilities: {
