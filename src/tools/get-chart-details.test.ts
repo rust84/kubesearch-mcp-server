@@ -57,6 +57,28 @@ describe('get-chart-details', () => {
     expect(mockDataCollector.collectValues).toHaveBeenCalledWith([mockRepoInfo.url]);
   });
 
+  it('should skip fetching values entirely when includeValues is false', async () => {
+    const releases = [createMockRelease({ key: 'test-key', chart: 'plex' })];
+
+    vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
+      releases,
+      repos: {
+        'test-key': [mockRepoInfo],
+      },
+    });
+    vi.mocked(mockDataCollector.collectValues).mockResolvedValue({
+      [mockRepoInfo.url]: mockValueTree,
+    });
+
+    const result = await getChartDetails(mockDataCollector, {
+      key: 'test-key',
+      includeValues: false,
+    });
+
+    expect(result.popularValues).toBeUndefined();
+    expect(mockDataCollector.collectValues).not.toHaveBeenCalled();
+  });
+
   it('should throw error for invalid key', async () => {
     vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
       releases: [],
