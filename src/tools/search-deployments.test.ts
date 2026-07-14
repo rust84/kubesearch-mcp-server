@@ -17,7 +17,6 @@ describe('search-deployments', () => {
       const mockCollectorData = {
         releases: [mockReleaseInfo, mockReleaseInfo2],
         repos: {},
-        values: {},
       };
 
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue(mockCollectorData);
@@ -35,7 +34,6 @@ describe('search-deployments', () => {
       const mockCollectorData = {
         releases: [mockReleaseInfo, mockReleaseInfo2],
         repos: {},
-        values: {},
       };
 
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue(mockCollectorData);
@@ -60,7 +58,6 @@ describe('search-deployments', () => {
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
         releases,
         repos: {},
-        values: {},
       });
 
       const results = await searchDeployments(mockDataCollector, {
@@ -82,7 +79,6 @@ describe('search-deployments', () => {
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
         releases,
         repos: {},
-        values: {},
       });
 
       const results = await searchDeployments(mockDataCollector, {
@@ -105,7 +101,6 @@ describe('search-deployments', () => {
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
         releases,
         repos: {},
-        values: {},
       });
 
       const results = await searchDeployments(mockDataCollector, {
@@ -126,7 +121,6 @@ describe('search-deployments', () => {
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
         releases,
         repos: {},
-        values: {},
       });
 
       const results = await searchDeployments(mockDataCollector, {
@@ -150,7 +144,6 @@ describe('search-deployments', () => {
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
         releases,
         repos: {},
-        values: {},
       });
 
       const authorWeights = { 'preferred-author': 2.0 };
@@ -164,7 +157,6 @@ describe('search-deployments', () => {
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
         releases: [mockReleaseInfo],
         repos: {},
-        values: {},
       });
 
       const results = await searchDeployments(mockDataCollector, {
@@ -178,7 +170,6 @@ describe('search-deployments', () => {
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
         releases: [mockReleaseInfo],
         repos: {},
-        values: {},
       });
 
       const results = await searchDeployments(mockDataCollector, {
@@ -192,7 +183,6 @@ describe('search-deployments', () => {
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
         releases: [mockReleaseInfo],
         repos: {},
-        values: {},
       });
 
       const results = await searchDeployments(mockDataCollector, {
@@ -215,7 +205,6 @@ describe('search-deployments', () => {
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
         releases: [mockReleaseInfo],
         repos: {},
-        values: {},
       });
 
       const results = await searchDeployments(mockDataCollector, {

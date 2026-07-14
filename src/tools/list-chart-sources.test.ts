@@ -37,7 +37,6 @@ describe('list-chart-sources', () => {
         'ghcr.io-bjw-s-helm-plex': [mockRepoInfo, mockRepoInfo, mockRepoInfo],
         'charts.bitnami.com-bitnami-nginx': [mockRepoInfo],
       },
-      values: {},
     });
 
     const results = await listChartSources(mockDataCollector, {
@@ -63,7 +62,6 @@ describe('list-chart-sources', () => {
         source2: [mockRepoInfo, mockRepoInfo, mockRepoInfo],
         source3: [mockRepoInfo, mockRepoInfo],
       },
-      values: {},
     });
 
     const results = await listChartSources(mockDataCollector, { query: 'app' });
@@ -86,7 +84,6 @@ describe('list-chart-sources', () => {
         source1: [mockRepoInfo],
         source2: [mockRepoInfo, mockRepoInfo, mockRepoInfo, mockRepoInfo],
       },
-      values: {},
     });
 
     const results = await listChartSources(mockDataCollector, {
@@ -102,7 +99,6 @@ describe('list-chart-sources', () => {
     vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
       releases: [createMockRelease({ chart: 'plex' })],
       repos: {},
-      values: {},
     });
 
     const results = await listChartSources(mockDataCollector, {

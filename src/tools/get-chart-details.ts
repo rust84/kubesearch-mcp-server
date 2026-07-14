@@ -151,6 +151,8 @@ export async function getChartDetails(
     throw new Error(`No repositories found for chart '${key}'`);
   }
 
+  const values = await dataCollector.collectValues(repos.map((r) => r.url));
+
   // Calculate statistics
   const totalRepos = repos.length;
 
@@ -183,7 +185,7 @@ export async function getChartDetails(
 
     // Flatten all value trees with repo info
     for (const repo of repos) {
-      const valueTree = collectorData.values[repo.url];
+      const valueTree = values[repo.url];
       if (valueTree) {
         const flattenedPaths = flattenValueTree(valueTree, repo.repo, repo.repo_url, repo.stars);
 

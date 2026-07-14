@@ -62,11 +62,13 @@ export async function getChartIndex(
     throw new Error(`No repositories found for chart '${key}'`);
   }
 
+  const values = await dataCollector.collectValues(repos.map((r) => r.url));
+
   // Collect all unique paths across all deployments
   const pathCounts = new Map<string, number>();
 
   for (const repo of repos) {
-    const valueTree = collectorData.values[repo.url];
+    const valueTree = values[repo.url];
     if (valueTree) {
       const paths = collectPaths(valueTree);
 

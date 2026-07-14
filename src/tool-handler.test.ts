@@ -9,6 +9,7 @@ describe('tool-handler', () => {
     mockDataCollector = {
       collectReleases: vi.fn(),
       collectValues: vi.fn(),
+      collectAllValues: vi.fn(),
     } as unknown as DataCollector;
   });
 
@@ -17,7 +18,6 @@ describe('tool-handler', () => {
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
         releases: [],
         repos: {},
-        values: {},
       });
 
       const result = await handleToolCall(mockDataCollector, {}, 'search_deployments', {
@@ -33,7 +33,6 @@ describe('tool-handler', () => {
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
         releases: [],
         repos: {},
-        values: {},
       });
 
       const result = await handleToolCall(mockDataCollector, {}, 'get_chart_details', {
@@ -48,7 +47,6 @@ describe('tool-handler', () => {
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
         releases: [],
         repos: {},
-        values: {},
       });
 
       const result = await handleToolCall(mockDataCollector, {}, 'get_chart_index', {
@@ -63,7 +61,6 @@ describe('tool-handler', () => {
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
         releases: [],
         repos: {},
-        values: {},
       });
 
       const result = await handleToolCall(mockDataCollector, {}, 'get_chart_stats', {
@@ -78,7 +75,6 @@ describe('tool-handler', () => {
       vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
         releases: [],
         repos: {},
-        values: {},
       });
 
       const result = await handleToolCall(mockDataCollector, {}, 'list_chart_sources', {
@@ -90,11 +86,7 @@ describe('tool-handler', () => {
     });
 
     it('routes search_container_images without throwing', async () => {
-      vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
-        releases: [],
-        repos: {},
-        values: {},
-      });
+      vi.mocked(mockDataCollector.collectAllValues).mockResolvedValue({});
 
       const result = await handleToolCall(mockDataCollector, {}, 'search_container_images', {
         image: 'ghcr.io/linuxserver/plex',

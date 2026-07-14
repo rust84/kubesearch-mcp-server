@@ -339,79 +339,6 @@ describe('DataCollector', () => {
         expect(result.releases[0].icon).toBeUndefined();
       });
 
-      it('should parse values JSON correctly', async () => {
-        const mockRows: FluxHelmReleaseRow[] = [
-          {
-            helm_repo_url: 'https://charts.example.com/',
-            helm_repo_name: 'example',
-            chart_name: 'app',
-            chart_version: '1.0.0',
-            release_name: 'app',
-            url: 'https://github.com/user/repo/blob/main/app.yaml',
-            repo_name: 'user/repo',
-            hajimari_icon: null,
-            hajimari_group: null,
-            timestamp: 1704067200,
-            stars: 75,
-            repo_url: 'https://github.com/user/repo',
-          },
-        ];
-
-        const mockValuesRows: ValuesRow[] = [
-          {
-            url: 'https://github.com/user/repo/blob/main/app.yaml',
-            val: JSON.stringify(mockSimpleValueTree),
-          },
-        ];
-
-        mockDb.all.mockResolvedValueOnce(mockRows);
-        mockDbExtended.all.mockResolvedValueOnce(mockValuesRows);
-
-        const result = await dataCollector.collectReleases();
-
-        expect(result.values['https://github.com/user/repo/blob/main/app.yaml']).toEqual(
-          mockSimpleValueTree,
-        );
-      });
-
-      it('should handle malformed JSON in values', async () => {
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-        const mockRows: FluxHelmReleaseRow[] = [
-          {
-            helm_repo_url: 'https://charts.example.com/',
-            helm_repo_name: 'example',
-            chart_name: 'app',
-            chart_version: '1.0.0',
-            release_name: 'app',
-            url: 'https://github.com/user/repo/blob/main/app.yaml',
-            repo_name: 'user/repo',
-            hajimari_icon: null,
-            hajimari_group: null,
-            timestamp: 1704067200,
-            stars: 75,
-            repo_url: 'https://github.com/user/repo',
-          },
-        ];
-
-        const mockValuesRows: ValuesRow[] = [
-          {
-            url: 'https://github.com/user/repo/blob/main/app.yaml',
-            val: '{ invalid json',
-          },
-        ];
-
-        mockDb.all.mockResolvedValueOnce(mockRows);
-        mockDbExtended.all.mockResolvedValueOnce(mockValuesRows);
-
-        const result = await dataCollector.collectReleases();
-
-        expect(result.values['https://github.com/user/repo/blob/main/app.yaml']).toEqual({});
-        expect(consoleSpy).toHaveBeenCalled();
-
-        consoleSpy.mockRestore();
-      });
-
       it('should group repos by key correctly', async () => {
         const mockRows: FluxHelmReleaseRow[] = [
           {
@@ -463,7 +390,45 @@ describe('DataCollector', () => {
 
         expect(result.releases).toEqual([]);
         expect(result.repos).toEqual({});
-        expect(result.values).toEqual({});
+      });
+    });
+
+    describe('collectAllValues', () => {
+      it('should parse values JSON correctly', async () => {
+        const mockValuesRows: ValuesRow[] = [
+          {
+            url: 'https://github.com/user/repo/blob/main/app.yaml',
+            val: JSON.stringify(mockSimpleValueTree),
+          },
+        ];
+
+        mockDbExtended.all.mockResolvedValueOnce(mockValuesRows);
+
+        const result = await dataCollector.collectAllValues();
+
+        expect(result['https://github.com/user/repo/blob/main/app.yaml']).toEqual(
+          mockSimpleValueTree,
+        );
+      });
+
+      it('should handle malformed JSON in values', async () => {
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        const mockValuesRows: ValuesRow[] = [
+          {
+            url: 'https://github.com/user/repo/blob/main/app.yaml',
+            val: '{ invalid json',
+          },
+        ];
+
+        mockDbExtended.all.mockResolvedValueOnce(mockValuesRows);
+
+        const result = await dataCollector.collectAllValues();
+
+        expect(result['https://github.com/user/repo/blob/main/app.yaml']).toEqual({});
+        expect(consoleSpy).toHaveBeenCalled();
+
+        consoleSpy.mockRestore();
       });
     });
 

@@ -23,7 +23,6 @@ describe('get-chart-stats', () => {
           createMockRepoInfo({ stars: 150, chart_version: '2.0.0' }),
         ],
       },
-      values: {},
     });
 
     const result = await getChartStats(mockDataCollector, { key: 'test-key' });
@@ -34,11 +33,33 @@ describe('get-chart-stats', () => {
     expect(result.statistics.latestVersion).toBeDefined();
   });
 
+  it('should not mutate the shared repos array when sorting top repositories', async () => {
+    const repos = [
+      createMockRepoInfo({ stars: 100, chart_version: '1.0.0' }),
+      createMockRepoInfo({ stars: 150, chart_version: '2.0.0' }),
+      createMockRepoInfo({ stars: 50, chart_version: '3.0.0' }),
+    ];
+    const originalOrder = [...repos];
+
+    vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
+      releases: [createMockRelease({ key: 'test-key' })],
+      repos: {
+        'test-key': repos,
+      },
+    });
+
+    const result = await getChartStats(mockDataCollector, { key: 'test-key' });
+
+    // Result is sorted by stars descending...
+    expect(result.topRepositories.map((r) => r.stars)).toEqual([150, 100, 50]);
+    // ...but the input array (shared cached state) keeps its original order
+    expect(repos).toEqual(originalOrder);
+  });
+
   it('should throw error for invalid key', async () => {
     vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
       releases: [],
       repos: {},
-      values: {},
     });
 
     await expect(getChartStats(mockDataCollector, { key: 'invalid' })).rejects.toThrow();

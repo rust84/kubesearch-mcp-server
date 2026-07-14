@@ -9,6 +9,7 @@ describe('get-chart-index', () => {
   beforeEach(() => {
     mockDataCollector = {
       collectReleases: vi.fn(),
+      collectValues: vi.fn(),
     } as unknown as DataCollector;
   });
 
@@ -20,22 +21,25 @@ describe('get-chart-index', () => {
       repos: {
         'test-key': [mockRepoInfo, mockRepoInfo],
       },
-      values: {
-        [mockRepoInfo.url]: mockValueTree,
-      },
+    });
+    vi.mocked(mockDataCollector.collectValues).mockResolvedValue({
+      [mockRepoInfo.url]: mockValueTree,
     });
 
     const result = await getChartIndex(mockDataCollector, { key: 'test-key' });
 
     expect(result).toBeDefined();
     expect(result.totalDeployments).toBe(2);
+    expect(mockDataCollector.collectValues).toHaveBeenCalledWith([
+      mockRepoInfo.url,
+      mockRepoInfo.url,
+    ]);
   });
 
   it('should throw error for invalid key', async () => {
     vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
       releases: [],
       repos: {},
-      values: {},
     });
 
     await expect(getChartIndex(mockDataCollector, { key: 'invalid' })).rejects.toThrow();

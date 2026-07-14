@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { searchContainerImages } from './search-container-images.js';
 import { DataCollector } from '../services/data-collector.js';
-import { createMockRelease, mockRepoInfo } from '../test/fixtures.js';
+import { mockRepoInfo } from '../test/fixtures.js';
 
 describe('search-container-images', () => {
   let mockDataCollector: DataCollector;
 
   beforeEach(() => {
     mockDataCollector = {
-      collectReleases: vi.fn(),
+      collectAllValues: vi.fn(),
     } as unknown as DataCollector;
   });
 
@@ -20,14 +20,8 @@ describe('search-container-images', () => {
       },
     };
 
-    vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
-      releases: [createMockRelease({})],
-      repos: {
-        'test-key': [mockRepoInfo],
-      },
-      values: {
-        [mockRepoInfo.url]: imageValues,
-      },
+    vi.mocked(mockDataCollector.collectAllValues).mockResolvedValue({
+      [mockRepoInfo.url]: imageValues,
     });
 
     const results = await searchContainerImages(mockDataCollector, {
@@ -38,11 +32,7 @@ describe('search-container-images', () => {
   });
 
   it('should handle empty results', async () => {
-    vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
-      releases: [],
-      repos: {},
-      values: {},
-    });
+    vi.mocked(mockDataCollector.collectAllValues).mockResolvedValue({});
 
     const results = await searchContainerImages(mockDataCollector, {
       image: 'nonexistent',
@@ -59,14 +49,8 @@ describe('search-container-images', () => {
       },
     };
 
-    vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
-      releases: [createMockRelease({})],
-      repos: {
-        'test-key': [mockRepoInfo, mockRepoInfo],
-      },
-      values: {
-        [mockRepoInfo.url]: imageValues,
-      },
+    vi.mocked(mockDataCollector.collectAllValues).mockResolvedValue({
+      [mockRepoInfo.url]: imageValues,
     });
 
     const results = await searchContainerImages(mockDataCollector, {

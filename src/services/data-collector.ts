@@ -74,20 +74,40 @@ export function releaseKey(_url: string, chart_name: string, release_name: strin
     .toLowerCase();
 }
 
+/**
+ * Maximum number of `?` placeholders to bind in a single IN-list query.
+ * SQLite's default SQLITE_MAX_VARIABLE_NUMBER is 999; stay well under that.
+ */
+const MAX_QUERY_CHUNK_SIZE = 500;
+
 export class DataCollector {
   private dbManager: DatabaseManager;
+  private releasesPromise: Promise<CollectorData> | null = null;
+  private allValuesPromise: Promise<Record<string, ValueTree>> | null = null;
 
   constructor(dbManager: DatabaseManager) {
     this.dbManager = dbManager;
   }
 
   /**
+   * Collect all releases from the database.
+   * Memoized: the databases are opened read-only and are immutable for the
+   * lifetime of the process, so the underlying query only runs once.
+   */
+  collectReleases(): Promise<CollectorData> {
+    this.releasesPromise ??= this.doCollectReleases().catch((error: unknown) => {
+      this.releasesPromise = null;
+      throw error;
+    });
+    return this.releasesPromise;
+  }
+
+  /**
    * Collect all releases from the database
    * Replicates generator.ts:102-248 collector() function
    */
-  async collectReleases(): Promise<CollectorData> {
+  private async doCollectReleases(): Promise<CollectorData> {
     const db = this.dbManager.getDb();
-    const dbExtended = this.dbManager.getDbExtended();
 
     // SQL query combining Flux HelmReleases (HelmRepository),
     // Flux HelmReleases (OCIRepository), and Argo Applications
@@ -216,12 +236,27 @@ export class DataCollector {
       });
     }
 
-    // Fetch values for all deployments
-    const keys = Array.from(new Set(Object.keys(repos)));
+    return {
+      releases, // Individual deployments (no aggregation)
+      repos, // Kept for backward compatibility
+    };
+  }
+
+  /**
+   * Collect values for specific URLs.
+   * Chunks the IN-list to stay under SQLite's default bound-parameter limit
+   * (SQLITE_MAX_VARIABLE_NUMBER = 999); behavior for <= MAX_QUERY_CHUNK_SIZE
+   * urls is unchanged (single query).
+   */
+  async collectValues(urls: string[]): Promise<Record<string, ValueTree>> {
+    const dbExtended = this.dbManager.getDbExtended();
     const values: Record<string, ValueTree> = {};
 
-    for (const key of keys) {
-      const urls = repos[key].map((r) => r.url);
+    if (urls.length === 0) return values;
+
+    for (let i = 0; i < urls.length; i += MAX_QUERY_CHUNK_SIZE) {
+      const chunk = urls.slice(i, i + MAX_QUERY_CHUNK_SIZE);
+
       const valuesQuery = `
         select url, val
         from
@@ -230,10 +265,10 @@ export class DataCollector {
             union all
             select url, val from argo_helm_application_values
           )
-        where url in (${urls.map(() => '?').join(',')})
+        where url in (${chunk.map(() => '?').join(',')})
       `;
 
-      const valueRows = await dbExtended.all<ValuesRow[]>(valuesQuery, urls);
+      const valueRows = await dbExtended.all<ValuesRow[]>(valuesQuery, chunk);
 
       for (const row of valueRows) {
         try {
@@ -245,21 +280,26 @@ export class DataCollector {
       }
     }
 
-    return {
-      releases, // Individual deployments (no aggregation)
-      repos, // Kept for backward compatibility
-      values,
-    };
+    return values;
   }
 
   /**
-   * Collect values for specific URLs
+   * Collect values for every deployment across both values tables.
+   * Memoized like `collectReleases()` for the same reason: the extended DB
+   * is immutable for the process lifetime, so there's no need to re-parse
+   * ~37 MB of JSON blobs on every call.
    */
-  async collectValues(urls: string[]): Promise<Record<string, ValueTree>> {
+  collectAllValues(): Promise<Record<string, ValueTree>> {
+    this.allValuesPromise ??= this.doCollectAllValues().catch((error: unknown) => {
+      this.allValuesPromise = null;
+      throw error;
+    });
+    return this.allValuesPromise;
+  }
+
+  private async doCollectAllValues(): Promise<Record<string, ValueTree>> {
     const dbExtended = this.dbManager.getDbExtended();
     const values: Record<string, ValueTree> = {};
-
-    if (urls.length === 0) return values;
 
     const valuesQuery = `
       select url, val
@@ -269,10 +309,9 @@ export class DataCollector {
           union all
           select url, val from argo_helm_application_values
         )
-      where url in (${urls.map(() => '?').join(',')})
     `;
 
-    const valueRows = await dbExtended.all<ValuesRow[]>(valuesQuery, urls);
+    const valueRows = await dbExtended.all<ValuesRow[]>(valuesQuery);
 
     for (const row of valueRows) {
       try {

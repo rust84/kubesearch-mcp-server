@@ -1,7 +1,7 @@
 /**
- * Integration tests for DataCollector.collectReleases() / collectValues()
- * against a real (in-memory) SQLite database, exercising the actual UNION ALL
- * query instead of mocking `db.all`.
+ * Integration tests for DataCollector.collectReleases() / collectValues() /
+ * collectAllValues() against a real (in-memory) SQLite database, exercising
+ * the actual UNION ALL query instead of mocking `db.all`.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -68,25 +68,11 @@ describe('DataCollector (real SQLite integration)', () => {
       expect(repoInfos[0].helm_repo_name).toBe('');
     });
 
-    it('parses values for plex and traefik', async () => {
-      const result = await dataCollector.collectReleases();
+    it('is memoized: two calls return the same object', async () => {
+      const first = await dataCollector.collectReleases();
+      const second = await dataCollector.collectReleases();
 
-      expect(result.values[plexUrl]).toBeDefined();
-      expect(
-        (result.values[plexUrl] as never as { persistence: { config: { enabled: boolean } } })
-          .persistence.config.enabled,
-      ).toBe(true);
-
-      expect(result.values[traefikUrl]).toBeDefined();
-      expect(
-        (result.values[traefikUrl] as never as { ingress: { enabled: boolean } }).ingress.enabled,
-      ).toBe(true);
-    });
-
-    it('handles malformed JSON for radarr values without throwing, returning {}', async () => {
-      const result = await dataCollector.collectReleases();
-
-      expect(result.values[radarrUrl]).toEqual({});
+      expect(second).toBe(first);
     });
   });
 
@@ -99,6 +85,53 @@ describe('DataCollector (real SQLite integration)', () => {
         (values[plexUrl] as never as { persistence: { config: { enabled: boolean } } }).persistence
           .config.enabled,
       ).toBe(true);
+    });
+
+    it('chunks IN-lists over 500 urls without dropping results', async () => {
+      const syntheticUrls = Array.from(
+        { length: 500 },
+        (_, i) => `https://github.com/nobody/nothing/app-${i}.yaml`,
+      );
+      // Real url placed in the second chunk (position 501)
+      const urls = [...syntheticUrls, plexUrl];
+
+      const values = await dataCollector.collectValues(urls);
+
+      expect(Object.keys(values)).toEqual([plexUrl]);
+      expect(
+        (values[plexUrl] as never as { persistence: { config: { enabled: boolean } } }).persistence
+          .config.enabled,
+      ).toBe(true);
+    });
+  });
+
+  describe('collectAllValues', () => {
+    it('parses values for plex and traefik', async () => {
+      const values = await dataCollector.collectAllValues();
+
+      expect(values[plexUrl]).toBeDefined();
+      expect(
+        (values[plexUrl] as never as { persistence: { config: { enabled: boolean } } }).persistence
+          .config.enabled,
+      ).toBe(true);
+
+      expect(values[traefikUrl]).toBeDefined();
+      expect(
+        (values[traefikUrl] as never as { ingress: { enabled: boolean } }).ingress.enabled,
+      ).toBe(true);
+    });
+
+    it('handles malformed JSON for radarr values without throwing, returning {}', async () => {
+      const values = await dataCollector.collectAllValues();
+
+      expect(values[radarrUrl]).toEqual({});
+    });
+
+    it('is memoized: two calls return the same object', async () => {
+      const first = await dataCollector.collectAllValues();
+      const second = await dataCollector.collectAllValues();
+
+      expect(second).toBe(first);
     });
   });
 });

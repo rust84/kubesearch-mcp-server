@@ -52,7 +52,6 @@ export interface ValuesData {
 export interface CollectorData {
   releases: ReleaseInfo[]; // Individual deployments (no longer aggregated)
   repos: Record<string, RepoInfo[]>; // Kept for backward compatibility with get_chart_details
-  values: Record<string, ValueTree>;
 }
 
 // Database row types

@@ -57,14 +57,14 @@ export async function searchContainerImages(
 ): Promise<ImageSearchResult[]> {
   const { image, limit = 20 } = input;
 
-  // Collect all releases and their values
-  const collectorData = await dataCollector.collectReleases();
+  // Collect values for all deployments
+  const allValues = await dataCollector.collectAllValues();
 
   // Map: repository -> tag -> URLs[]
   const imageMap = new Map<string, Map<string, string[]>>();
 
   // Extract images from all values
-  for (const [url, valueTree] of Object.entries(collectorData.values)) {
+  for (const [url, valueTree] of Object.entries(allValues)) {
     const imagesInTree = extractImages(valueTree);
 
     for (const [repository, tags] of imagesInTree) {
