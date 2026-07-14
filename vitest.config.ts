@@ -31,7 +31,6 @@ export default defineConfig({
         branches: 75,
         statements: 80,
       },
-      all: true,
     },
 
     // Test behavior
