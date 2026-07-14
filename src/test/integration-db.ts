@@ -1,19 +1,18 @@
 /**
  * In-memory SQLite database helper for integration tests.
  *
- * Creates real SQLite databases (via the same `sqlite`/`sqlite3` driver the
- * app uses) with the schema of the real `repos.db` / `repos-extended.db`
+ * Creates real SQLite databases (via the same built-in `node:sqlite` driver
+ * the app uses) with the schema of the real `repos.db` / `repos-extended.db`
  * files, so tests can exercise the actual SQL in DataCollector instead of
  * mocking `db.all`.
  */
 
-import { open, Database } from 'sqlite';
-import sqlite3 from 'sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import { DatabaseManager } from '../services/database.js';
 
 export interface TestDatabases {
-  db: Database<sqlite3.Database, sqlite3.Statement>;
-  dbExtended: Database<sqlite3.Database, sqlite3.Statement>;
+  db: DatabaseSync;
+  dbExtended: DatabaseSync;
   stubManager: DatabaseManager;
 }
 
@@ -49,12 +48,16 @@ const EXTENDED_DB_SCHEMA = `
  * Open two in-memory SQLite databases with the repos.db / repos-extended.db
  * schema, plus a stub DatabaseManager exposing them via getDb()/getDbExtended().
  */
-export async function createTestDatabases(): Promise<TestDatabases> {
-  const db = await open({ filename: ':memory:', driver: sqlite3.Database });
-  const dbExtended = await open({ filename: ':memory:', driver: sqlite3.Database });
+export function createTestDatabases(): TestDatabases {
+  // `enableDoubleQuotedStringLiterals` matches the production DatabaseManager
+  // config (see database.ts) so the real UNION ALL query - which uses `""`
+  // as an empty string literal in the Argo branch - runs the same way here
+  // as it does against the real read-only databases.
+  const db = new DatabaseSync(':memory:', { enableDoubleQuotedStringLiterals: true });
+  const dbExtended = new DatabaseSync(':memory:', { enableDoubleQuotedStringLiterals: true });
 
-  await db.exec(MAIN_DB_SCHEMA);
-  await dbExtended.exec(EXTENDED_DB_SCHEMA);
+  db.exec(MAIN_DB_SCHEMA);
+  dbExtended.exec(EXTENDED_DB_SCHEMA);
 
   const stubManager = {
     getDb: () => db,
@@ -72,23 +75,18 @@ export async function createTestDatabases(): Promise<TestDatabases> {
  * - one release from argo_helm_application (Argo branch)
  * - matching values rows, including one malformed-JSON row
  */
-export async function seedStandardFixture(
-  db: Database<sqlite3.Database, sqlite3.Statement>,
-  dbExtended: Database<sqlite3.Database, sqlite3.Statement>,
-): Promise<void> {
+export function seedStandardFixture(db: DatabaseSync, dbExtended: DatabaseSync): void {
   const plexUrl = 'https://github.com/onedr0p/home-ops/plex.yaml';
   const radarrUrl = 'https://github.com/someone/k8s/radarr.yaml';
   const traefikUrl = 'https://github.com/onedr0p/home-ops/traefik.yaml';
 
-  await db.run(
-    `INSERT INTO repo (repo_name, url, branch, stars) VALUES (?, ?, ?, ?)`,
+  db.prepare(`INSERT INTO repo (repo_name, url, branch, stars) VALUES (?, ?, ?, ?)`).run(
     'onedr0p/home-ops',
     'https://github.com/onedr0p/home-ops',
     'main',
     2670,
   );
-  await db.run(
-    `INSERT INTO repo (repo_name, url, branch, stars) VALUES (?, ?, ?, ?)`,
+  db.prepare(`INSERT INTO repo (repo_name, url, branch, stars) VALUES (?, ?, ?, ?)`).run(
     'someone/k8s',
     'https://github.com/someone/k8s',
     'main',
@@ -96,11 +94,12 @@ export async function seedStandardFixture(
   );
 
   // Branch 1: HelmRepository
-  await db.run(
+  db.prepare(
     `INSERT INTO flux_helm_release
       (release_name, chart_name, chart_version, namespace, repo_name, hajimari_icon,
        hajimari_group, chart_ref_kind, lines, url, timestamp, helm_repo_name, helm_repo_namespace)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(
     'plex',
     'plex',
     '1.0.0',
@@ -115,10 +114,11 @@ export async function seedStandardFixture(
     'plex-repo',
     'media',
   );
-  await db.run(
+  db.prepare(
     `INSERT INTO flux_helm_repo
       (helm_repo_name, namespace, helm_repo_url, interval, repo_name, lines, url, timestamp)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(
     'plex-repo',
     'media',
     'https://example.github.io/charts/',
@@ -130,11 +130,12 @@ export async function seedStandardFixture(
   );
 
   // Branch 2: OCIRepository (NULL release namespace -> flux-system fallback)
-  await db.run(
+  db.prepare(
     `INSERT INTO flux_helm_release
       (release_name, chart_name, chart_version, namespace, repo_name, hajimari_icon,
        hajimari_group, chart_ref_kind, lines, url, timestamp, helm_repo_name, helm_repo_namespace)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(
     'radarr',
     'radarr',
     null,
@@ -149,9 +150,10 @@ export async function seedStandardFixture(
     'app-template',
     null,
   );
-  await db.run(
+  db.prepare(
     `INSERT INTO flux_oci_repository (name, tag, url, namespace, repo_name)
      VALUES (?, ?, ?, ?, ?)`,
+  ).run(
     'app-template',
     '1.0.0',
     'oci://ghcr.io/bjw-s/helm/app-template',
@@ -160,11 +162,12 @@ export async function seedStandardFixture(
   );
 
   // Branch 3: Argo
-  await db.run(
+  db.prepare(
     `INSERT INTO argo_helm_application
       (release_name, chart_name, chart_version, namespace, repo_name, hajimari_icon,
        hajimari_group, lines, url, timestamp, helm_repo_url)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(
     'traefik',
     'traefik',
     null,
@@ -179,19 +182,13 @@ export async function seedStandardFixture(
   );
 
   // Values
-  await dbExtended.run(
-    `INSERT INTO flux_helm_release_values (url, val) VALUES (?, ?)`,
-    plexUrl,
-    '{"persistence":{"config":{"enabled":true}}}',
-  );
-  await dbExtended.run(
-    `INSERT INTO flux_helm_release_values (url, val) VALUES (?, ?)`,
-    radarrUrl,
-    '{not json',
-  );
-  await dbExtended.run(
-    `INSERT INTO argo_helm_application_values (url, val) VALUES (?, ?)`,
-    traefikUrl,
-    '{"ingress":{"enabled":true}}',
-  );
+  dbExtended
+    .prepare(`INSERT INTO flux_helm_release_values (url, val) VALUES (?, ?)`)
+    .run(plexUrl, '{"persistence":{"config":{"enabled":true}}}');
+  dbExtended
+    .prepare(`INSERT INTO flux_helm_release_values (url, val) VALUES (?, ?)`)
+    .run(radarrUrl, '{not json');
+  dbExtended
+    .prepare(`INSERT INTO argo_helm_application_values (url, val) VALUES (?, ?)`)
+    .run(traefikUrl, '{"ingress":{"enabled":true}}');
 }

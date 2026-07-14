@@ -5,8 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { Database } from 'sqlite';
-import sqlite3 from 'sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import { DataCollector } from './data-collector.js';
 import { createTestDatabases, seedStandardFixture } from '../test/integration-db.js';
 
@@ -15,21 +14,21 @@ const radarrUrl = 'https://github.com/someone/k8s/radarr.yaml';
 const traefikUrl = 'https://github.com/onedr0p/home-ops/traefik.yaml';
 
 describe('DataCollector (real SQLite integration)', () => {
-  let db: Database<sqlite3.Database, sqlite3.Statement>;
-  let dbExtended: Database<sqlite3.Database, sqlite3.Statement>;
+  let db: DatabaseSync;
+  let dbExtended: DatabaseSync;
   let dataCollector: DataCollector;
 
-  beforeEach(async () => {
-    const testDbs = await createTestDatabases();
+  beforeEach(() => {
+    const testDbs = createTestDatabases();
     db = testDbs.db;
     dbExtended = testDbs.dbExtended;
-    await seedStandardFixture(db, dbExtended);
+    seedStandardFixture(db, dbExtended);
     dataCollector = new DataCollector(testDbs.stubManager);
   });
 
-  afterEach(async () => {
-    await db.close();
-    await dbExtended.close();
+  afterEach(() => {
+    db.close();
+    dbExtended.close();
   });
 
   describe('collectReleases', () => {

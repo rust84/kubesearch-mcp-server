@@ -2,13 +2,12 @@
  * DatabaseManager - Manages SQLite database connections
  */
 
-import { open, Database } from 'sqlite';
-import sqlite3 from 'sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import { Config } from '../types/kubesearch.js';
 
 export class DatabaseManager {
-  private db: Database<sqlite3.Database, sqlite3.Statement> | null = null;
-  private dbExtended: Database<sqlite3.Database, sqlite3.Statement> | null = null;
+  private db: DatabaseSync | null = null;
+  private dbExtended: DatabaseSync | null = null;
   private config: Config;
 
   constructor(config: Config) {
@@ -20,18 +19,19 @@ export class DatabaseManager {
    */
   async open(): Promise<void> {
     try {
-      // Open main database
-      this.db = await open({
-        filename: this.config.DB_PATH,
-        driver: sqlite3.Database,
-        mode: sqlite3.OPEN_READONLY,
+      // Open main database. `enableDoubleQuotedStringLiterals` restores the
+      // legacy SQLite behavior the previous `sqlite3` native driver used by
+      // default, which the queries in data-collector.ts rely on (e.g. `""`
+      // as an empty string literal in the Argo union branch).
+      this.db = new DatabaseSync(this.config.DB_PATH, {
+        readOnly: true,
+        enableDoubleQuotedStringLiterals: true,
       });
 
       // Open extended database
-      this.dbExtended = await open({
-        filename: this.config.DB_EXTENDED_PATH,
-        driver: sqlite3.Database,
-        mode: sqlite3.OPEN_READONLY,
+      this.dbExtended = new DatabaseSync(this.config.DB_EXTENDED_PATH, {
+        readOnly: true,
+        enableDoubleQuotedStringLiterals: true,
       });
 
       console.error('Database connections established');
@@ -45,11 +45,11 @@ export class DatabaseManager {
    */
   async close(): Promise<void> {
     if (this.db) {
-      await this.db.close();
+      this.db.close();
       this.db = null;
     }
     if (this.dbExtended) {
-      await this.dbExtended.close();
+      this.dbExtended.close();
       this.dbExtended = null;
     }
     console.error('Database connections closed');
@@ -58,7 +58,7 @@ export class DatabaseManager {
   /**
    * Get main database instance
    */
-  getDb(): Database<sqlite3.Database, sqlite3.Statement> {
+  getDb(): DatabaseSync {
     if (!this.db) {
       throw new Error('Database not initialized. Call open() first.');
     }
@@ -68,7 +68,7 @@ export class DatabaseManager {
   /**
    * Get extended database instance
    */
-  getDbExtended(): Database<sqlite3.Database, sqlite3.Statement> {
+  getDbExtended(): DatabaseSync {
     if (!this.dbExtended) {
       throw new Error('Extended database not initialized. Call open() first.');
     }

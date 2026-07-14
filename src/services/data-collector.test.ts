@@ -170,22 +170,28 @@ describe('DataCollector', () => {
     let dataCollector: DataCollector;
     let mockDbManager: DatabaseManager;
     let mockDb: {
-      all: ReturnType<typeof vi.fn>;
+      prepare: ReturnType<typeof vi.fn>;
       get: ReturnType<typeof vi.fn>;
     };
     let mockDbExtended: {
-      all: ReturnType<typeof vi.fn>;
+      prepare: ReturnType<typeof vi.fn>;
       get: ReturnType<typeof vi.fn>;
     };
+    // Underlying `.all()` mocks returned by `prepare(...)`, exposed directly
+    // so tests can configure return values / assert call counts.
+    let mockDbAll: ReturnType<typeof vi.fn>;
+    let mockDbExtendedAll: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
+      mockDbAll = vi.fn();
       mockDb = {
-        all: vi.fn(),
+        prepare: vi.fn(() => ({ all: mockDbAll })),
         get: vi.fn(),
       };
 
+      mockDbExtendedAll = vi.fn();
       mockDbExtended = {
-        all: vi.fn(),
+        prepare: vi.fn(() => ({ all: mockDbExtendedAll })),
         get: vi.fn(),
       };
 
@@ -216,8 +222,8 @@ describe('DataCollector', () => {
           },
         ];
 
-        mockDb.all.mockResolvedValueOnce(mockRows);
-        mockDbExtended.all.mockResolvedValue([]);
+        mockDbAll.mockReturnValueOnce(mockRows);
+        mockDbExtendedAll.mockReturnValue([]);
 
         const result = await dataCollector.collectReleases();
 
@@ -253,8 +259,8 @@ describe('DataCollector', () => {
           },
         ];
 
-        mockDb.all.mockResolvedValueOnce(mockRows);
-        mockDbExtended.all.mockResolvedValue([]);
+        mockDbAll.mockReturnValueOnce(mockRows);
+        mockDbExtendedAll.mockReturnValue([]);
 
         const result = await dataCollector.collectReleases();
 
@@ -279,8 +285,8 @@ describe('DataCollector', () => {
           },
         ];
 
-        mockDb.all.mockResolvedValueOnce(mockRows);
-        mockDbExtended.all.mockResolvedValue([]);
+        mockDbAll.mockReturnValueOnce(mockRows);
+        mockDbExtendedAll.mockReturnValue([]);
 
         const result = await dataCollector.collectReleases();
 
@@ -305,8 +311,8 @@ describe('DataCollector', () => {
           },
         ];
 
-        mockDb.all.mockResolvedValueOnce(mockRows);
-        mockDbExtended.all.mockResolvedValue([]);
+        mockDbAll.mockReturnValueOnce(mockRows);
+        mockDbExtendedAll.mockReturnValue([]);
 
         const result = await dataCollector.collectReleases();
 
@@ -331,8 +337,8 @@ describe('DataCollector', () => {
           },
         ];
 
-        mockDb.all.mockResolvedValueOnce(mockRows);
-        mockDbExtended.all.mockResolvedValue([]);
+        mockDbAll.mockReturnValueOnce(mockRows);
+        mockDbExtendedAll.mockReturnValue([]);
 
         const result = await dataCollector.collectReleases();
 
@@ -371,8 +377,8 @@ describe('DataCollector', () => {
           },
         ];
 
-        mockDb.all.mockResolvedValueOnce(mockRows);
-        mockDbExtended.all.mockResolvedValue([]);
+        mockDbAll.mockReturnValueOnce(mockRows);
+        mockDbExtendedAll.mockReturnValue([]);
 
         const result = await dataCollector.collectReleases();
 
@@ -383,8 +389,8 @@ describe('DataCollector', () => {
       });
 
       it('should return empty arrays when database is empty', async () => {
-        mockDb.all.mockResolvedValueOnce([]);
-        mockDbExtended.all.mockResolvedValue([]);
+        mockDbAll.mockReturnValueOnce([]);
+        mockDbExtendedAll.mockReturnValue([]);
 
         const result = await dataCollector.collectReleases();
 
@@ -402,7 +408,7 @@ describe('DataCollector', () => {
           },
         ];
 
-        mockDbExtended.all.mockResolvedValueOnce(mockValuesRows);
+        mockDbExtendedAll.mockReturnValueOnce(mockValuesRows);
 
         const result = await dataCollector.collectAllValues();
 
@@ -421,7 +427,7 @@ describe('DataCollector', () => {
           },
         ];
 
-        mockDbExtended.all.mockResolvedValueOnce(mockValuesRows);
+        mockDbExtendedAll.mockReturnValueOnce(mockValuesRows);
 
         const result = await dataCollector.collectAllValues();
 
@@ -444,7 +450,7 @@ describe('DataCollector', () => {
           { url: urls[1], val: JSON.stringify({ replicas: 3 }) },
         ];
 
-        mockDbExtended.all.mockResolvedValueOnce(mockValuesRows);
+        mockDbExtendedAll.mockReturnValueOnce(mockValuesRows);
 
         const result = await dataCollector.collectValues(urls);
 
@@ -456,14 +462,14 @@ describe('DataCollector', () => {
         const result = await dataCollector.collectValues([]);
 
         expect(result).toEqual({});
-        expect(mockDbExtended.all).not.toHaveBeenCalled();
+        expect(mockDbExtended.prepare).not.toHaveBeenCalled();
       });
 
       it('should parse JSON correctly', async () => {
         const urls = ['https://github.com/user/repo/blob/main/app.yaml'];
         const mockValuesRows: ValuesRow[] = [{ url: urls[0], val: JSON.stringify(mockValueTree) }];
 
-        mockDbExtended.all.mockResolvedValueOnce(mockValuesRows);
+        mockDbExtendedAll.mockReturnValueOnce(mockValuesRows);
 
         const result = await dataCollector.collectValues(urls);
 
@@ -476,7 +482,7 @@ describe('DataCollector', () => {
         const urls = ['https://github.com/user/repo/blob/main/app.yaml'];
         const mockValuesRows: ValuesRow[] = [{ url: urls[0], val: '{ bad json' }];
 
-        mockDbExtended.all.mockResolvedValueOnce(mockValuesRows);
+        mockDbExtendedAll.mockReturnValueOnce(mockValuesRows);
 
         const result = await dataCollector.collectValues(urls);
 
@@ -491,7 +497,7 @@ describe('DataCollector', () => {
 
       it('should return empty object for missing values', async () => {
         const urls = ['https://github.com/user/repo/blob/main/app.yaml'];
-        mockDbExtended.all.mockResolvedValueOnce([]);
+        mockDbExtendedAll.mockReturnValueOnce([]);
 
         const result = await dataCollector.collectValues(urls);
 
@@ -518,7 +524,7 @@ describe('DataCollector', () => {
 
         const mockValuesRows: ValuesRow[] = [{ url: urls[0], val: JSON.stringify(complexTree) }];
 
-        mockDbExtended.all.mockResolvedValueOnce(mockValuesRows);
+        mockDbExtendedAll.mockReturnValueOnce(mockValuesRows);
 
         const result = await dataCollector.collectValues(urls);
 

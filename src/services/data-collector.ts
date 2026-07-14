@@ -187,7 +187,7 @@ export class DataCollector {
     const repos: Record<string, RepoInfo[]> = {};
 
     // Execute query and collect results
-    const rows = await db.all<FluxHelmReleaseRow[]>(query);
+    const rows = db.prepare(query).all() as unknown as FluxHelmReleaseRow[];
 
     for (const row of rows) {
       const { chart_name, release_name } = row;
@@ -268,7 +268,7 @@ export class DataCollector {
         where url in (${chunk.map(() => '?').join(',')})
       `;
 
-      const valueRows = await dbExtended.all<ValuesRow[]>(valuesQuery, chunk);
+      const valueRows = dbExtended.prepare(valuesQuery).all(...chunk) as unknown as ValuesRow[];
 
       for (const row of valueRows) {
         try {
@@ -311,7 +311,7 @@ export class DataCollector {
         )
     `;
 
-    const valueRows = await dbExtended.all<ValuesRow[]>(valuesQuery);
+    const valueRows = dbExtended.prepare(valuesQuery).all() as unknown as ValuesRow[];
 
     for (const row of valueRows) {
       try {
