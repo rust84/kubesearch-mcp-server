@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { DataCollector } from '../services/data-collector.js';
 import { ChartDetailsResult, ValueTree } from '../types/kubesearch.js';
 import { getChartDetailsInput } from '../tool-inputs.js';
+import { latestVersion } from '../utils/semver.js';
 
 // z.input (not z.infer/z.output) so the defaulted fields stay optional here,
 // matching the pre-parse shape: existing unit tests call this function
@@ -146,10 +147,11 @@ export async function getChartDetails(
   // Calculate statistics
   const totalRepos = repos.length;
 
-  // Find latest version (semantic versioning aware)
-  const versions = repos.map((r) => r.chart_version).filter((v) => v && v.trim() !== '');
+  const versions = repos
+    .map((r) => r.chart_version)
+    .filter((v): v is string => Boolean(v && v.trim() !== ''));
 
-  const latestVersion = versions.length > 0 ? versions[0] : 'unknown';
+  const chartLatestVersion = latestVersion(versions);
 
   // Get the first repo for metadata
   const firstRepo = repos[0];
@@ -240,7 +242,7 @@ export async function getChartDetails(
     popularValues,
     statistics: {
       totalRepos,
-      latestVersion,
+      latestVersion: chartLatestVersion,
     },
   };
 }

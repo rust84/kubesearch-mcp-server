@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { DataCollector } from '../services/data-collector.js';
 import { ChartStatsResult } from '../types/kubesearch.js';
 import { getChartStatsInput } from '../tool-inputs.js';
+import { latestVersion } from '../utils/semver.js';
 
 export type GetChartStatsInput = z.infer<typeof getChartStatsInput>;
 
@@ -55,7 +56,10 @@ export async function getChartStats(
     .sort((a, b) => b.count - a.count)
     .slice(0, 10); // Top 10 versions
 
-  const latestVersion = versionDistribution.length > 0 ? versionDistribution[0].version : 'unknown';
+  const versions = repos
+    .map((r) => r.chart_version)
+    .filter((v): v is string => Boolean(v && v.trim() !== ''));
+  const chartLatestVersion = latestVersion(versions);
 
   // Get top repositories by stars
   const topRepositories = [...repos]
@@ -78,7 +82,7 @@ export async function getChartStats(
       totalDeployments,
       minStars,
       maxStars,
-      latestVersion,
+      latestVersion: chartLatestVersion,
     },
     topRepositories,
     versionDistribution,
