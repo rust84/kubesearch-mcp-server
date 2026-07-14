@@ -37,7 +37,7 @@ function parseAuthorWeights(): Record<string, number> {
 
   try {
     const parsed = JSON.parse(authorWeightsEnv);
-    const validated = z.record(z.string(), z.number().finite().positive()).parse(parsed);
+    const validated = z.record(z.string(), z.number().positive()).parse(parsed);
     console.error('Loaded custom author weights:', validated);
     return validated;
   } catch (error) {
