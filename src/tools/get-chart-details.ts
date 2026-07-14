@@ -128,8 +128,6 @@ export async function getChartDetails(
     throw new Error(`No repositories found for chart '${key}'`);
   }
 
-  const values = await dataCollector.collectValues(repos.map((r) => r.url));
-
   // Calculate statistics
   const totalRepos = repos.length;
 
@@ -148,6 +146,8 @@ export async function getChartDetails(
   let popularValues: ChartDetailsResult['popularValues'] = undefined;
 
   if (includeValues) {
+    const values = await dataCollector.collectValues(repos.map((r) => r.url));
+
     const allValuePaths = new Map<
       string,
       {
