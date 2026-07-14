@@ -26,6 +26,10 @@ COPY src ./src
 # Build TypeScript
 RUN npm run build
 
+# Remove devDependencies; keeps compiled sqlite3 binaries intact
+# (prune only deletes packages — it never recompiles native addons)
+RUN npm prune --omit=dev
+
 # Stage 2: Production Runtime
 # Lean image with only compiled code and runtime dependencies
 FROM node:24-slim
@@ -35,7 +39,7 @@ WORKDIR /app
 # Set production environment
 ENV NODE_ENV=production
 
-# Copy the compiled node_modules from builder
+# Copy the production-only node_modules from builder (pruned in builder)
 # This includes compiled sqlite3 .node binaries
 # DO NOT run npm ci again - would fail without build tools
 COPY --from=builder /app/node_modules ./node_modules
