@@ -16,12 +16,14 @@ finalScore = baseScore × authorMultiplier
 ```
 
 Where:
+
 - **baseScore**: Standard search score (exact match, length, individual repo stars)
 - **authorMultiplier**: Boost multiplier for recognized repository owners (default: 1.0)
 
 ### Repository Owner Detection
 
 The system extracts the owner from the repository name:
+
 - `onedr0p/home-ops` → owner: `onedr0p`
 - `bjw-s/home-ops` → owner: `bjw-s`
 - `billimek/k8s-gitops` → owner: `billimek`
@@ -30,11 +32,11 @@ If the owner matches a configured author weight, their deployment gets boosted.
 
 ### Default Author Multipliers
 
-| Repository Owner | Multiplier | Boost | Notes |
-|-----------------|-----------|-------|-------|
-| **onedr0p** | 1.1x | +10% | Prominent k8s-at-home community member |
-| **bjw-s** | 1.1x | +10% | app-template creator, active contributor |
-| Other owners | 1.0x | 0% | No boost (neutral) |
+| Repository Owner | Multiplier | Boost | Notes                                    |
+| ---------------- | ---------- | ----- | ---------------------------------------- |
+| **onedr0p**      | 1.1x       | +10%  | Prominent k8s-at-home community member   |
+| **bjw-s**        | 1.1x       | +10%  | app-template creator, active contributor |
+| Other owners     | 1.0x       | 0%    | No boost (neutral)                       |
 
 ## Configuration
 
@@ -43,6 +45,7 @@ If the owner matches a configured author weight, their deployment gets boosted.
 Author weights can be configured via the `AUTHOR_WEIGHTS` environment variable in your MCP client configuration. **No rebuild required!**
 
 **Default weights** (if not set):
+
 ```json
 {
   "bjw-s": 1.1,
@@ -93,8 +96,8 @@ You can also modify the default weights in `src/types/kubesearch.ts`:
 ```typescript
 export const DEFAULT_AUTHOR_WEIGHTS: Record<string, number> = {
   'bjw-s': 1.1,
-  'onedr0p': 1.1,
-  'billimek': 1.05,  // Add another preferred community member
+  onedr0p: 1.1,
+  billimek: 1.05, // Add another preferred community member
 };
 ```
 
@@ -189,6 +192,7 @@ function detectAuthor(repo: string, authorWeights: Record<string, number>): stri
 ```
 
 **Matching is case-insensitive:**
+
 - `OnedrOp/cluster` matches `onedr0p` in weights
 - `BJW-S/home-ops` matches `bjw-s` in weights
 
@@ -196,9 +200,8 @@ function detectAuthor(repo: string, authorWeights: Record<string, number>): stri
 
 Author weighting applies to:
 
-1. **search_helm_charts** - Individual deployments ranked by owner + stars
-2. **get_chart_details** - Repositories sorted by owner + stars
-3. **grep_helm_values** - Examples prioritized by owner + stars
+1. **search_deployments** - Individual deployments ranked by owner + stars
+2. **get_chart_details** - Value variations for each configuration path sorted by owner + stars
 
 ## FAQ
 
@@ -217,6 +220,7 @@ AUTHOR_WEIGHTS='{"onedr0p": 1.1, "bjw-s": 1.1, "billimek": 1.1}'
 ### Q: What's a good multiplier value?
 
 **A:**
+
 - **1.05-1.1** (5-10%): Subtle boost for preferred sources
 - **1.1-1.3** (10-30%): Moderate boost for high-quality maintainers
 - **1.3-2.0** (30-100%): Strong boost for your favorites
@@ -232,9 +236,9 @@ npx tsx test-radarr.ts
 
 You'll see results like `onedr0p/home-ops`, `bjw-s/home-ops`, etc. The first part is the owner.
 
-### Q: Does this work with grep_helm_values?
+### Q: Does this work with get_chart_details?
 
-**A:** Yes! When you search for value patterns, examples from weighted authors appear first.
+**A:** Yes! When you view popular configuration values, the value variations from weighted authors appear first.
 
 ## Summary
 
