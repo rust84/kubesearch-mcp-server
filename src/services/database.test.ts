@@ -23,7 +23,6 @@ describe('DatabaseManager', () => {
   const mockConfig: Config = {
     DB_PATH: '/path/to/repos.db',
     DB_EXTENDED_PATH: '/path/to/repos-extended.db',
-    LOG_LEVEL: 'info',
     AUTHOR_WEIGHTS: {},
   };
 
@@ -267,7 +266,6 @@ describe('DatabaseManager', () => {
       const customConfig: Config = {
         DB_PATH: '/custom/path/main.db',
         DB_EXTENDED_PATH: '/custom/path/extended.db',
-        LOG_LEVEL: 'debug',
         AUTHOR_WEIGHTS: {},
       };
       const customManager = new DatabaseManager(customConfig);
@@ -286,7 +284,6 @@ describe('DatabaseManager', () => {
       const customConfig: Config = {
         DB_PATH: '/custom/path/main.db',
         DB_EXTENDED_PATH: '/custom/path/extended.db',
-        LOG_LEVEL: 'debug',
         AUTHOR_WEIGHTS: {},
       };
       const customManager = new DatabaseManager(customConfig);

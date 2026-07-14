@@ -99,14 +99,12 @@ Configure the server using environment variables:
 
 - `KUBESEARCH_DB_PATH` - Path to main database (default: `/data/repos.db`)
 - `KUBESEARCH_DB_EXTENDED_PATH` - Path to extended database (default: `/data/repos-extended.db`)
-- `LOG_LEVEL` - Logging level: `debug`, `info`, `warn`, `error` (default: `info`)
 - `AUTHOR_WEIGHTS` - JSON object for author scoring (default: `{"bjw-s": 1.5}`)
 
 Example with custom environment:
 
 ```bash
 docker run --init -i \
-  -e LOG_LEVEL=debug \
   -e 'AUTHOR_WEIGHTS={"bjw-s": 1.5, "onedr0p": 1.2}' \
   -v $(pwd)/repos.db:/data/repos.db:ro \
   -v $(pwd)/repos-extended.db:/data/repos-extended.db:ro \
@@ -202,7 +200,6 @@ export KUBESEARCH_DB_EXTENDED_PATH=/path/to/k8s-at-home-search/repos-extended.db
 
 ### Optional Environment Variables
 
-- `LOG_LEVEL` - Logging level (default: info)
 - `AUTHOR_WEIGHTS` - JSON object with author boost multipliers (see below)
 
 ### Author Weights Configuration

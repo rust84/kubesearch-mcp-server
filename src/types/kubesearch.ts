@@ -150,7 +150,6 @@ export interface ChartStatsResult {
 export interface Config {
   DB_PATH: string;
   DB_EXTENDED_PATH: string;
-  LOG_LEVEL: string;
   AUTHOR_WEIGHTS: Record<string, number>;
 }
 

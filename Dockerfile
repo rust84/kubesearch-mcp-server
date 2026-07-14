@@ -58,8 +58,7 @@ RUN mkdir -p /data && \
 # Environment variable defaults
 # Databases must be mounted at /data/ via volumes
 ENV KUBESEARCH_DB_PATH=/data/repos.db \
-    KUBESEARCH_DB_EXTENDED_PATH=/data/repos-extended.db \
-    LOG_LEVEL=info
+    KUBESEARCH_DB_EXTENDED_PATH=/data/repos-extended.db
 
 # Run as non-root user (security best practice)
 # Uses built-in node user from official image
