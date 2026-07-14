@@ -12,7 +12,7 @@ import { SEARCH_WEIGHTS, ReleaseInfo } from '../types/kubesearch.js';
  * @param authorWeights - Map of author names to check
  * @returns Author identifier or null
  */
-function detectAuthor(repo: string, authorWeights: Record<string, number>): string | null {
+export function detectAuthor(repo: string, authorWeights: Record<string, number>): string | null {
   // Extract owner from "owner/repo" format
   const owner = repo.split('/')[0]?.toLowerCase() || '';
 

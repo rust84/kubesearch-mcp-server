@@ -36,19 +36,6 @@ export interface ValueTree {
   [key: string]: ValueTree | string | number | boolean | null;
 }
 
-export interface ValueList {
-  name: string;
-  count: number;
-  types: string[];
-  urls: number[];
-}
-
-export interface ValuesData {
-  list: ValueList[];
-  urlMap: Record<number, string>;
-  valueMap: Record<string, Record<number, unknown[]>>;
-}
-
 export interface CollectorData {
   releases: ReleaseInfo[]; // Individual deployments (no longer aggregated)
   repos: Record<string, RepoInfo[]>; // Kept for backward compatibility with get_chart_details
@@ -88,15 +75,6 @@ export interface SearchChartResult {
   icon?: string;
   key: string;
   score: number;
-}
-
-export interface GrepValueResult {
-  valuePath: string;
-  count: number;
-  examples: Array<{
-    value: unknown;
-    repoUrl: string;
-  }>;
 }
 
 export interface ChartDetailsResult {
@@ -177,12 +155,9 @@ export interface Config {
 }
 
 // Constants
-export const MINIMUM_COUNT = 3;
-
 export const SEARCH_WEIGHTS = {
   fullMatch: 100, // Significantly increased to always prioritize exact matches
   length: 1,
-  count: 5, // No longer used (was deployment count per aggregated chart)
   stars: 0.1, // Weight for individual repository GitHub stars (0.1 = 10 stars = 1 point)
 };
 

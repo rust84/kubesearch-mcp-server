@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { DataCollector } from '../services/data-collector.js';
 import { ChartDetailsResult, ValueTree } from '../types/kubesearch.js';
 import { getChartDetailsInput } from '../tool-inputs.js';
+import { detectAuthor } from '../utils/scoring.js';
 import { latestVersion } from '../utils/semver.js';
 
 // z.input (not z.infer/z.output) so the defaulted fields stay optional here,
@@ -89,21 +90,6 @@ function flattenValueTree(
   }
 
   return result;
-}
-
-/**
- * Detect author from repository owner
- */
-function detectAuthor(repo: string, authorWeights: Record<string, number>): string | null {
-  const owner = repo.split('/')[0]?.toLowerCase() || '';
-
-  for (const author of Object.keys(authorWeights)) {
-    if (owner === author.toLowerCase()) {
-      return author;
-    }
-  }
-
-  return null;
 }
 
 /**
