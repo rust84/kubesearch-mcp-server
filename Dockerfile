@@ -1,12 +1,6 @@
 # Stage 1: Build
-# Install dependencies and compile TypeScript + native modules
+# Install dependencies and compile TypeScript
 FROM node:24-slim AS builder
-
-# Install build dependencies for native modules (sqlite3)
-# python3, make, g++ are required for node-gyp to compile C++ bindings
-RUN apt-get update && \
-    apt-get install -y python3 make g++ && \
-    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -26,8 +20,8 @@ COPY src ./src
 # Build TypeScript
 RUN npm run build
 
-# Remove devDependencies; keeps compiled sqlite3 binaries intact
-# (prune only deletes packages — it never recompiles native addons)
+# Remove devDependencies (sdk/zod runtime deps only survive; sqlite access
+# is via the built-in node:sqlite module, so there's nothing native to prune)
 RUN npm prune --omit=dev
 
 # Stage 2: Production Runtime
@@ -40,8 +34,6 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 # Copy the production-only node_modules from builder (pruned in builder)
-# This includes compiled sqlite3 .node binaries
-# DO NOT run npm ci again - would fail without build tools
 COPY --from=builder /app/node_modules ./node_modules
 
 # Copy built JavaScript code
