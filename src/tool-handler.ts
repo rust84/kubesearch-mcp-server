@@ -25,6 +25,25 @@ import {
   searchContainerImagesInput,
 } from './tool-inputs.js';
 
+// Patterns matching error messages that are safe (and useful) to send to
+// MCP clients verbatim. Everything else is logged server-side and replaced
+// with a generic message, so internals like absolute DB paths or driver
+// errors never leak to clients. Extend this allowlist deliberately when a
+// tool adds a new client-facing error.
+//
+// Covers the two "not found" phrasings thrown by get-chart-details.ts,
+// get-chart-index.ts, and get-chart-stats.ts:
+//   - "Chart with key '<key>' not found"
+//   - "No repositories found for chart(...)"
+const CLIENT_SAFE_ERROR_PATTERNS = [/not found/i, /^No .+ found for/i, /^Unknown tool/];
+
+function isClientSafeError(error: unknown): error is Error {
+  return (
+    error instanceof Error &&
+    CLIENT_SAFE_ERROR_PATTERNS.some((pattern) => pattern.test(error.message))
+  );
+}
+
 export const toolSchemas = [
   searchDeploymentsSchema,
   listChartSourcesSchema,
@@ -139,12 +158,24 @@ export async function handleToolCall(
       };
     }
 
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (isClientSafeError(error)) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error: ${error.message}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    console.error('tool call failed:', error);
     return {
       content: [
         {
           type: 'text',
-          text: `Error: ${errorMessage}`,
+          text: `Error: internal error while executing ${name}`,
         },
       ],
       isError: true,

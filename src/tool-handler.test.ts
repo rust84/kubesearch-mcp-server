@@ -104,7 +104,7 @@ describe('tool-handler', () => {
       expect(result.content[0].text).toBe('Error: Unknown tool: bogus');
     });
 
-    it('returns an error envelope when a tool throws', async () => {
+    it('returns a generic error envelope when a tool throws a non-client-safe error', async () => {
       vi.mocked(mockDataCollector.collectReleases).mockRejectedValue(new Error('boom'));
 
       const result = await handleToolCall(mockDataCollector, {}, 'search_deployments', {
@@ -112,7 +112,40 @@ describe('tool-handler', () => {
       });
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toBe('Error: boom');
+      expect(result.content[0].text).toBe(
+        'Error: internal error while executing search_deployments',
+      );
+    });
+
+    it('does not leak internal error details (e.g. absolute DB paths) to clients', async () => {
+      vi.mocked(mockDataCollector.collectReleases).mockRejectedValue(
+        new Error('SQLITE_CANTOPEN: unable to open database file /home/user/secret/path'),
+      );
+
+      const result = await handleToolCall(mockDataCollector, {}, 'search_deployments', {
+        query: 'plex',
+      });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).not.toContain('/home/user');
+      expect(result.content[0].text).toBe(
+        'Error: internal error while executing search_deployments',
+      );
+    });
+
+    it('still surfaces a not-found error message verbatim, including the key', async () => {
+      vi.mocked(mockDataCollector.collectReleases).mockResolvedValue({
+        releases: [],
+        repos: {},
+      });
+
+      const result = await handleToolCall(mockDataCollector, {}, 'get_chart_details', {
+        key: 'bogus-key',
+      });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('not found');
+      expect(result.content[0].text).toContain('bogus-key');
     });
 
     it('returns a validation error envelope for search_deployments when query is missing', async () => {
