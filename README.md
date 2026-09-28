@@ -30,14 +30,11 @@ Pull and run the pre-built image from GitHub Container Registry:
 # Pull the latest image
 docker pull ghcr.io/rust84/kubesearch-mcp-server:latest
 
-# Run with database volumes (REQUIRED)
-docker run --init -i \
-  -v $(pwd)/repos.db:/data/repos.db:ro \
-  -v $(pwd)/repos-extended.db:/data/repos-extended.db:ro \
-  ghcr.io/rust84/kubesearch-mcp-server:latest
+# Run — the databases are bundled in the image and refreshed daily by CI
+docker run --init -i ghcr.io/rust84/kubesearch-mcp-server:latest
 ```
 
-**Important:** The Docker image does NOT include databases. You must mount your database files at `/data/repos.db` and `/data/repos-extended.db`.
+The image bundles the latest SQLite databases from [k8s-at-home-search](https://kubesearch.dev) and is refreshed daily by CI. The bundled databases may be up to ~24 hours behind the upstream release; for real-time data or pinned snapshots, see [Overriding the bundled databases](#overriding-the-bundled-databases) below.
 
 ### Using with Claude Desktop
 
@@ -53,10 +50,6 @@ Add to your Claude Desktop configuration (`~/.config/Claude/claude_desktop_confi
         "--init",
         "-i",
         "--rm",
-        "-v",
-        "/absolute/path/to/repos.db:/data/repos.db:ro",
-        "-v",
-        "/absolute/path/to/repos-extended.db:/data/repos-extended.db:ro",
         "ghcr.io/rust84/kubesearch-mcp-server:latest"
       ]
     }
@@ -64,34 +57,33 @@ Add to your Claude Desktop configuration (`~/.config/Claude/claude_desktop_confi
 }
 ```
 
-**Note:** Replace `/absolute/path/to/` with the actual absolute path to your database files.
-
 ### Building Locally
 
 ```bash
-# Build the image
+# Build the image — DBs are downloaded and baked in at build time
 docker build -t kubesearch-mcp-server .
 
 # Run your local build
+docker run --init -i kubesearch-mcp-server
+```
+
+### Overriding the bundled databases
+
+The published image ships with the latest databases baked in. Power users who want to pin a specific k8s-at-home-search snapshot (for reproducibility, or to use a private build) can mount their own SQLite files at `/data/` — the mount shadows the bundled DBs at runtime.
+
+```bash
 docker run --init -i \
   -v $(pwd)/repos.db:/data/repos.db:ro \
   -v $(pwd)/repos-extended.db:/data/repos-extended.db:ro \
-  kubesearch-mcp-server
+  ghcr.io/rust84/kubesearch-mcp-server:latest
 ```
 
-### Database Requirements
+Expected files:
 
-The container requires two SQLite database files to be mounted:
+- **repos.db** (~5.5 MB) — Main database
+- **repos-extended.db** (~29 MB) — Extended data
 
-- **repos.db** (~5.5 MB) - Main database
-- **repos-extended.db** (~29 MB) - Extended data
-
-**Mount location:** `/data/`
-
-These files are NOT included in the Docker image. You must:
-
-1. Download the databases (see Prerequisites section below)
-2. Mount them as read-only volumes when running the container
+See [Getting the Databases](#getting-the-databases) below for how to obtain them.
 
 ### Environment Variables
 
@@ -106,9 +98,7 @@ Example with custom environment:
 ```bash
 docker run --init -i \
   -e 'AUTHOR_WEIGHTS={"bjw-s": 1.5, "onedr0p": 1.2}' \
-  -v $(pwd)/repos.db:/data/repos.db:ro \
-  -v $(pwd)/repos-extended.db:/data/repos-extended.db:ro \
-  kubesearch-mcp-server
+  ghcr.io/rust84/kubesearch-mcp-server:latest
 ```
 
 ### Multi-Platform Support
@@ -750,11 +740,11 @@ finalScore = baseScore * authorMultiplier;
 
 ### "Database not found" error
 
-Ensure the database paths are correct and the files exist:
+The bundled databases ship with the image at `/data/repos.db` and `/data/repos-extended.db`. If you've mounted your own DBs at `/data/`, ensure the paths in `KUBESEARCH_DB_PATH` / `KUBESEARCH_DB_EXTENDED_PATH` match your mount points and that the files exist:
 
 ```bash
-ls -lh /path/to/repos.db
-ls -lh /path/to/repos-extended.db
+ls -lh /data/repos.db
+ls -lh /data/repos-extended.db
 ```
 
 ### "Failed to open databases" error
