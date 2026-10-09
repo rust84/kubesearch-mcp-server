@@ -36,7 +36,7 @@ export class DatabaseManager {
 
       console.error('Database connections established');
     } catch (error) {
-      throw new Error(`Failed to open databases: ${error}`);
+      throw new Error(`Failed to open databases: ${error}`, { cause: error });
     }
   }
 
