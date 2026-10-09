@@ -1,15 +1,13 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "github>home-operations/renovate-config"
-  ],
-  "timezone": "Europe/London",
-  "rebaseWhen": "conflicted",
-  "packageRules": [
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: ["github>home-operations/renovate-config"],
+  timezone: "Europe/London",
+  rebaseWhen: "conflicted",
+  packageRules: [
     {
-      "description": "Group vitest packages",
-      "groupName": "vitest",
-      "matchPackagePatterns": ["vitest", "@vitest/"]
-    }
-  ]
+      description: "Group vitest packages",
+      groupName: "vitest",
+      matchPackageNames: ["/vitest/", "/@vitest//"],
+    },
+  ],
 }
