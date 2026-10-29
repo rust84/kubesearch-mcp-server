@@ -1,6 +1,6 @@
 # Stage 1: Build
 # Install dependencies and compile TypeScript
-FROM node:24-slim AS builder
+FROM node:26-slim AS builder
 
 WORKDIR /app
 
@@ -27,7 +27,7 @@ RUN npm prune --omit=dev
 # Stage 2: Download kubesearch databases
 # Built on the host platform so QEMU doesn't redownload for each target arch.
 # curl is preferred by download-databases.sh; wget would also work via its fallback.
-FROM --platform=$BUILDPLATFORM node:24-slim AS db-fetch
+FROM --platform=$BUILDPLATFORM node:26-slim AS db-fetch
 
 WORKDIR /data
 
@@ -47,7 +47,7 @@ RUN chmod +x /usr/local/bin/download-databases.sh \
 
 # Stage 3: Production Runtime
 # Lean image with only compiled code, runtime dependencies, and bundled DBs
-FROM node:24-slim
+FROM node:26-slim
 
 WORKDIR /app
 
