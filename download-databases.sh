@@ -75,11 +75,27 @@ check_dependencies() {
 get_latest_release() {
     log_info "Fetching latest release information..."
 
+    # Authenticate when a token is available: unauthenticated calls share the
+    # runner egress IP with thousands of users and intermittently hit the
+    # 60 req/hr rate limit. Token sources: GITHUB_TOKEN env var, or
+    # GITHUB_TOKEN_FILE (path to a token file, used with the BuildKit
+    # --mount=type=secret in the Dockerfile).
+    local token=""
+    if [ -n "${GITHUB_TOKEN:-}" ]; then
+        token="${GITHUB_TOKEN}"
+    elif [ -n "${GITHUB_TOKEN_FILE:-}" ] && [ -r "${GITHUB_TOKEN_FILE:-}" ]; then
+        token="$(cat "${GITHUB_TOKEN_FILE}")"
+    fi
+
+    # --fail + --retry: transient API errors or rate-limit blips are retried
+    # with a delay; a final failure yields an empty response handled below.
     local response
     if command -v curl &> /dev/null; then
-        response=$(curl -s "$API_URL")
+        response=$(curl -s --fail --retry 3 --retry-delay 2 \
+            ${token:+-H "Authorization: Bearer ${token}"} "$API_URL" || true)
     elif command -v wget &> /dev/null; then
-        response=$(wget -qO- "$API_URL")
+        response=$(wget -q -t 4 \
+            ${token:+--header="Authorization: Bearer ${token}"} -O - "$API_URL" || true)
     fi
 
     if [ -z "$response" ]; then

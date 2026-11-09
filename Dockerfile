@@ -42,8 +42,12 @@ COPY download-databases.sh /usr/local/bin/download-databases.sh
 # freshness, and code pushes don't need to pay a fresh download.
 ARG DB_REFRESH_DATE=manual
 
-RUN chmod +x /usr/local/bin/download-databases.sh \
-    && /usr/local/bin/download-databases.sh /data
+# The GitHub API token (optional) is mounted as a BuildKit secret so the
+# release lookup is authenticated — unauthenticated api.github.com calls
+# from shared runner IPs intermittently hit the 60 req/hr rate limit.
+RUN --mount=type=secret,id=github_token,required=false \
+    chmod +x /usr/local/bin/download-databases.sh \
+    && GITHUB_TOKEN_FILE=/run/secrets/github_token /usr/local/bin/download-databases.sh /data
 
 # Stage 3: Production Runtime
 # Lean image with only compiled code, runtime dependencies, and bundled DBs
