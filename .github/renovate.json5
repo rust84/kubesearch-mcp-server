@@ -1,6 +1,15 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
-  extends: ["github>home-operations/renovate-config"],
+  // Note: this previously extended github>home-operations/renovate-config,
+  // which was deleted upstream (404 since Oct 2026) and broke every run.
+  // The built-in presets below reproduce that behaviour: semantic chore
+  // commits and digest-pinned GitHub Actions.
+  extends: [
+    "config:recommended",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)",
+    "helpers:pinGitHubActionDigests",
+  ],
   timezone: "Europe/London",
   rebaseWhen: "conflicted",
   packageRules: [
@@ -8,6 +17,16 @@
       description: "Group vitest packages",
       groupName: "vitest",
       matchPackageNames: ["/vitest/", "/@vitest//"],
+    },
+    {
+      description: "Scope npm commits as chore(npm)",
+      matchManagers: ["npm"],
+      semanticCommitScope: "npm",
+    },
+    {
+      description: "Scope GitHub Actions commits as chore(github-action)",
+      matchManagers: ["github-actions"],
+      semanticCommitScope: "github-action",
     },
   ],
 }
