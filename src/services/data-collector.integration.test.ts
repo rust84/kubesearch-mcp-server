@@ -134,3 +134,155 @@ describe('DataCollector (real SQLite integration)', () => {
     });
   });
 });
+
+/**
+ * Regression tests for issue #148: the collector's OCI join must be scoped to
+ * the release's own repo (`flor.repo_name = rel.repo_name`), and every branch
+ * of the UNION ALL must be deduped by release url (grouping now wraps the
+ * whole compound, not just the first branch). Without these, per-chart
+ * deployment counts were inflated and releases were attributed to sibling
+ * chart sources.
+ */
+describe('DataCollector.collectReleases — repo-scoped OCI join and full dedupe (issue #148)', () => {
+  let db: DatabaseSync;
+  let dbExtended: DatabaseSync;
+  let dataCollector: DataCollector;
+
+  const alphaNextcloudUrl = 'https://github.com/alpha/home-ops/blob/main/apps/nextcloud.yaml';
+  const betaSonarrUrl = 'https://github.com/beta/home-ops/blob/main/apps/sonarr.yaml';
+  const gammaVaultUrl = 'https://github.com/gamma/home-ops/blob/main/apps/vault.yaml';
+
+  const alphaOciUrl = 'oci://ghcr.io/alpha/helm/app-template';
+  const betaOciUrl = 'oci://ghcr.io/beta/helm/app-template';
+
+  beforeEach(() => {
+    const testDbs = createTestDatabases();
+    db = testDbs.db;
+    dbExtended = testDbs.dbExtended;
+    dataCollector = new DataCollector(testDbs.stubManager);
+
+    for (const [name, stars] of [
+      ['alpha/home-ops', 100],
+      ['beta/home-ops', 20],
+      ['gamma/home-ops', 1],
+    ] as const) {
+      db.prepare(`INSERT INTO repo (repo_name, url, branch, stars) VALUES (?, ?, 'main', ?)`).run(
+        name,
+        `https://github.com/${name}`,
+        stars,
+      );
+    }
+
+    const insertRelease = db.prepare(
+      `INSERT INTO flux_helm_release
+        (release_name, chart_name, chart_version, namespace, repo_name, hajimari_icon,
+         hajimari_group, chart_ref_kind, lines, url, timestamp, helm_repo_name, helm_repo_namespace)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    );
+    const insertOci = db.prepare(
+      `INSERT INTO flux_oci_repository (name, tag, url, namespace, repo_name) VALUES (?, ?, ?, ?, ?)`,
+    );
+
+    // OCI release in alpha, NULL helm_repo_namespace (flux-system fallback).
+    insertRelease.run(
+      'nextcloud',
+      'nextcloud',
+      '1.0.0',
+      'apps',
+      'alpha/home-ops',
+      null,
+      null,
+      'OCIRepository',
+      0,
+      alphaNextcloudUrl,
+      '2024-01-01',
+      'shared-oci',
+      null,
+    );
+    // OCI release in beta, same helm_repo_name, matching beta's own OCI row.
+    insertRelease.run(
+      'sonarr',
+      'sonarr',
+      '2.0.0',
+      'media',
+      'beta/home-ops',
+      null,
+      null,
+      'OCIRepository',
+      0,
+      betaSonarrUrl,
+      '2024-01-01',
+      'shared-oci',
+      null,
+    );
+    // OCI release in gamma: gamma has NO OCI row of its own. Only repos alpha
+    // and beta carry an identically-named 'shared-oci' row, so the unscoped
+    // join wrongly attributed this release to a sibling chart source.
+    insertRelease.run(
+      'vault',
+      'vault',
+      '3.0.0',
+      'security',
+      'gamma/home-ops',
+      null,
+      null,
+      'OCIRepository',
+      0,
+      gammaVaultUrl,
+      '2024-01-01',
+      'shared-oci',
+      null,
+    );
+
+    // Same-named OCI rows in alpha and beta (the cross-attribution trap).
+    insertOci.run('shared-oci', '1.0.0', alphaOciUrl, 'flux-system', 'alpha/home-ops');
+    insertOci.run('shared-oci', '2.0.0', betaOciUrl, 'flux-system', 'beta/home-ops');
+    // Second row for alpha's own 'shared-oci' (NULL namespace also matches the
+    // release's NULL helm_repo_namespace): join fan-out within the same repo,
+    // must be collapsed by the url dedupe.
+    insertOci.run('shared-oci', '1.0.0', alphaOciUrl, null, 'alpha/home-ops');
+  });
+
+  afterEach(() => {
+    db.close();
+    dbExtended.close();
+  });
+
+  it('attributes each OCI release only to its own repo OCIRepository row', async () => {
+    const { releases } = await dataCollector.collectReleases();
+
+    const nextcloud = releases.find((r) => r.release === 'nextcloud');
+    expect(nextcloud?.chartsUrl).toBe(alphaOciUrl);
+    expect(nextcloud?.repo).toBe('alpha/home-ops');
+
+    const sonarr = releases.find((r) => r.release === 'sonarr');
+    expect(sonarr?.chartsUrl).toBe(betaOciUrl);
+    expect(sonarr?.repo).toBe('beta/home-ops');
+  });
+
+  it('does not attribute an OCI release to a sibling repo OCI row', async () => {
+    const { releases } = await dataCollector.collectReleases();
+
+    // gamma has no OCI row of its own; the unscoped join matched alpha's and
+    // beta's 'shared-oci' rows and surfaced the release under their URLs.
+    const vault = releases.find((r) => r.release === 'vault');
+    expect(vault).toBeUndefined();
+  });
+
+  it('returns exactly one entry per distinct release url across all branches', async () => {
+    const { releases } = await dataCollector.collectReleases();
+
+    const urls = releases.map((r) => r.deploymentUrl);
+    expect(urls).toHaveLength(new Set(urls).size);
+    // alpha's release matched two same-repo OCI rows (flux-system + NULL ns);
+    // after repo-scoping + dedupe exactly 2 OCI releases remain.
+    expect(urls.sort()).toEqual([alphaNextcloudUrl, betaSonarrUrl].sort());
+  });
+
+  it('repos map holds one deployment entry per release (no fan-out duplicates)', async () => {
+    const { releases, repos } = await dataCollector.collectReleases();
+
+    const repoEntries = Object.values(repos).flat();
+    expect(repoEntries).toHaveLength(releases.length);
+  });
+});

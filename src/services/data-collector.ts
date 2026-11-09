@@ -110,8 +110,15 @@ export class DataCollector {
     const db = this.dbManager.getDb();
 
     // SQL query combining Flux HelmReleases (HelmRepository),
-    // Flux HelmReleases (OCIRepository), and Argo Applications
+    // Flux HelmReleases (OCIRepository), and Argo Applications.
+    //
+    // The whole compound is wrapped in `select * from ( ... ) group by url`
+    // so every branch is deduped by release url (see issue #148: previously
+    // only the first branch was grouped, so OCI/Argo join fan-out rows were
+    // counted as separate deployments).
     const query = `
+      select * from (
+
       select
         hrep.helm_repo_url,
         hrep.helm_repo_name,
@@ -133,7 +140,6 @@ export class DataCollector {
       (rel.chart_ref_kind = 'HelmRepository' or rel.chart_ref_kind = 'GitRepository')
       join repo repo
       on rel.repo_name = repo.repo_name
-      group by rel.url
 
       union all
 
@@ -154,6 +160,7 @@ export class DataCollector {
       join flux_oci_repository flor
       on rel.helm_repo_name = flor.name and
       rel.chart_ref_kind = 'OCIRepository'
+      and flor.repo_name = rel.repo_name
       and (
         flor.namespace = rel.helm_repo_namespace
         or (rel.helm_repo_namespace is null and (flor.namespace is null or flor.namespace = 'flux-system'))
@@ -161,7 +168,6 @@ export class DataCollector {
 
       join repo repo
       on rel.repo_name = repo.repo_name
-      group by rel.url
 
       union all
 
@@ -181,6 +187,8 @@ export class DataCollector {
       from argo_helm_application rel
       join repo repo
       on rel.repo_name = repo.repo_name
+
+      ) group by url
     `;
 
     const releases: ReleaseInfo[] = [];
